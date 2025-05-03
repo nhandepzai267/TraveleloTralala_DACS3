@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1095598665204",
+    "project_id": "travellelotralala",
+    "storage_bucket": "travellelotralala.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1095598665204:android:f1ce14a94a9de871d29da1",
+        "android_client_info": {
+          "package_name": "com.example.travellelotralala"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA3MMFZDJrNjQ5vsQ-spRl1PctsFIrvU7E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
