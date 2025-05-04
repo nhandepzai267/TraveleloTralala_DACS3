@@ -1,19 +1,28 @@
 package com.example.travellelotralala.navigation
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.example.travellelotralala.ui.components.TabItem
 import com.example.travellelotralala.ui.screens.WelcomeScreen
 import com.example.travellelotralala.ui.screens.authscreens.AuthScreen
 import com.example.travellelotralala.ui.screens.authscreens.login.LoginScreen
 import com.example.travellelotralala.ui.screens.authscreens.signup.SignupScreen
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Text
-import androidx.compose.ui.Alignment
+import com.example.travellelotralala.ui.screens.mainscreens.bookingsscreen.BookingsScreen
+import com.example.travellelotralala.ui.screens.mainscreens.homescreen.HomeScreen
+import com.example.travellelotralala.ui.screens.mainscreens.notificationsscreen.NotificationsScreen
+import com.example.travellelotralala.ui.screens.mainscreens.savedscreen.SavedScreen
 
 sealed class Screen(val route: String) {
     object Welcome : Screen("welcome")
@@ -22,6 +31,13 @@ sealed class Screen(val route: String) {
     object SignUp : Screen("signup")
     object Home : Screen("home")
     object ForgotPassword : Screen("forgot_password")
+    object Saved : Screen("saved")
+    object Bookings : Screen("bookings")
+    object Notifications : Screen("notifications")
+    object Profile : Screen("profile")
+    object TripDetail : Screen("trip_detail/{tripId}") {
+        fun createRoute(tripId: String) = "trip_detail/$tripId"
+    }
 }
 
 @Composable
@@ -83,9 +99,75 @@ fun NavGraph(
         }
         
         composable(Screen.Home.route) {
+            HomeScreen(
+                onDestinationClick = { tripId ->
+                    navController.navigate(Screen.TripDetail.createRoute(tripId))
+                },
+                onNavigateToTab = { tab ->
+                    navigateToTab(navController, tab, Screen.Home.route)
+                }
+            )
+        }
+        
+        composable(Screen.Saved.route) {
+            SavedScreen(
+                onNavigateToTab = { tab ->
+                    navigateToTab(navController, tab, Screen.Saved.route)
+                }
+            )
+        }
+        
+        composable(Screen.Bookings.route) {
+            BookingsScreen(
+                onNavigateToTab = { tab ->
+                    navigateToTab(navController, tab, Screen.Bookings.route)
+                }
+            )
+        }
+        
+        composable(Screen.Notifications.route) {
+            NotificationsScreen(
+                onNavigateToTab = { tab ->
+                    navigateToTab(navController, tab, Screen.Notifications.route)
+                }
+            )
+        }
+        
+        composable(Screen.Profile.route) {
+            // Tạm thời hiển thị một màn hình đơn giản
             Box(modifier = Modifier.fillMaxSize()) {
-                Text("Home Screen", modifier = Modifier.align(Alignment.Center))
+                Text("Profile Screen", modifier = Modifier.align(Alignment.Center))
             }
+        }
+        
+        composable(
+            route = Screen.TripDetail.route,
+            arguments = listOf(navArgument("tripId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val tripId = backStackEntry.arguments?.getString("tripId") ?: ""
+            // Tạm thời hiển thị một màn hình đơn giản
+            Box(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+                Text(
+                    text = "Trip Detail Screen for ID: $tripId",
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            }
+        }
+    }
+}
+
+// Hàm helper để tránh lặp lại code khi điều hướng giữa các tab
+private fun navigateToTab(navController: NavHostController, tab: TabItem, currentRoute: String) {
+    val targetRoute = when (tab) {
+        TabItem.HOME -> Screen.Home.route
+        TabItem.SAVED -> Screen.Saved.route
+        TabItem.BOOKINGS -> Screen.Bookings.route
+        TabItem.NOTIFICATIONS -> Screen.Notifications.route
+    }
+    
+    if (targetRoute != currentRoute) {
+        navController.navigate(targetRoute) {
+            popUpTo(currentRoute) { inclusive = true }
         }
     }
 }

@@ -10,7 +10,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
 import com.example.travellelotralala.navigation.NavGraph
 import com.example.travellelotralala.ui.theme.TravelleloTralalaTheme
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -28,5 +30,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+
 
 

@@ -8,9 +8,12 @@ import com.example.travellelotralala.repository.FirebaseAuthRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 
-class SignupViewModel(
-    private val authRepository: AuthRepository = FirebaseAuthRepository()
+@HiltViewModel
+class SignupViewModel @Inject constructor(
+    private val authRepository: AuthRepository
 ) : ViewModel() {
     
     private val _signupState = MutableStateFlow<SignupState>(SignupState.Initial)
