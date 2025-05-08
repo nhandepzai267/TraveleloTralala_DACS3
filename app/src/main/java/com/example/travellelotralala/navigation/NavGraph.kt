@@ -1,5 +1,6 @@
 package com.example.travellelotralala.navigation
 
+import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -23,6 +24,7 @@ import com.example.travellelotralala.ui.screens.mainscreens.bookingsscreen.Booki
 import com.example.travellelotralala.ui.screens.mainscreens.homescreen.HomeScreen
 import com.example.travellelotralala.ui.screens.mainscreens.notificationsscreen.NotificationsScreen
 import com.example.travellelotralala.ui.screens.mainscreens.savedscreen.SavedScreen
+import com.example.travellelotralala.ui.screens.tripdetail.TripDetailScreen
 
 sealed class Screen(val route: String) {
     object Welcome : Screen("welcome")
@@ -113,6 +115,9 @@ fun NavGraph(
             SavedScreen(
                 onNavigateToTab = { tab ->
                     navigateToTab(navController, tab, Screen.Saved.route)
+                },
+                onTripClick = { tripId ->
+                    navController.navigate(Screen.TripDetail.createRoute(tripId))
                 }
             )
         }
@@ -145,13 +150,11 @@ fun NavGraph(
             arguments = listOf(navArgument("tripId") { type = NavType.StringType })
         ) { backStackEntry ->
             val tripId = backStackEntry.arguments?.getString("tripId") ?: ""
-            // Tạm thời hiển thị một màn hình đơn giản
-            Box(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-                Text(
-                    text = "Trip Detail Screen for ID: $tripId",
-                    modifier = Modifier.align(Alignment.Center)
-                )
-            }
+            Log.d("NavGraph", "TripDetail screen with ID: $tripId")
+            TripDetailScreen(
+                tripId = tripId,
+                onBackClick = { navController.popBackStack() }
+            )
         }
     }
 }
@@ -171,5 +174,9 @@ private fun navigateToTab(navController: NavHostController, tab: TabItem, curren
         }
     }
 }
+
+
+
+
 
 

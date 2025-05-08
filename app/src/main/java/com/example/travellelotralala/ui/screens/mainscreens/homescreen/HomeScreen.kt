@@ -1,5 +1,6 @@
 package com.example.travellelotralala.ui.screens.mainscreens.homescreen
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -244,6 +245,9 @@ fun TripCard(
     trip: Trip,
     onClick: () -> Unit
 ) {
+    // Thêm log để kiểm tra ID
+    Log.d("TripCard", "Trip ID: ${trip.id}")
+    
     Box(
         modifier = Modifier
             .width(300.dp)
@@ -328,4 +332,33 @@ fun TripCard(
 }
 
 // TabSwitcher component is now in com.example.travellelotralala.ui.components.TabSwitcher
+
+@Composable
+fun FeaturedTripsSection(
+    trips: List<Trip>,
+    onTripClick: (String) -> Unit
+) {
+    Column(modifier = Modifier.padding(vertical = 16.dp)) {
+        Text(
+            text = "Featured Trips",
+            style = MaterialTheme.typography.titleLarge,
+            modifier = Modifier.padding(horizontal = 16.dp)
+        )
+        
+        LazyRow(
+            contentPadding = PaddingValues(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            items(trips.filter { it.featured }) { trip ->
+                TripCard(
+                    trip = trip,
+                    onClick = { 
+                        Log.d("HomeScreen", "Navigating to trip detail with ID: ${trip.id}")
+                        onTripClick(trip.id) 
+                    }
+                )
+            }
+        }
+    }
+}
 

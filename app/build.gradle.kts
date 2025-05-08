@@ -51,6 +51,7 @@ dependencies {
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
+    implementation("androidx.compose.material:material:1.5.4")
     implementation("androidx.compose.material3:material3:1.1.2")
     implementation("androidx.compose.material:material-icons-extended:1.5.4")
     implementation(libs.firebase.firestore.ktx)
@@ -66,15 +67,24 @@ dependencies {
     implementation(platform("com.google.firebase:firebase-bom:33.12.0"))
     implementation("com.google.firebase:firebase-analytics")
     implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.firebase:firebase-firestore")
     implementation("androidx.navigation:navigation-compose:2.7.7")
-    implementation("io.coil-kt:coil-compose:2.4.0")
     // Hilt
     implementation("com.google.dagger:hilt-android:2.50")
     kapt("com.google.dagger:hilt-android-compiler:2.50")
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
+    implementation("io.coil-kt:coil-compose:2.4.0")
+    // Google Play Services
+    implementation("com.google.android.gms:play-services-auth:20.7.0")
 }
 
 kapt {
     correctErrorTypes = true
 }
+
+
+
+
+
+
 

@@ -1,7 +1,5 @@
 package com.example.travellelotralala.di
 
-import com.example.travellelotralala.repository.AuthRepository
-import com.example.travellelotralala.repository.FirebaseAuthRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import dagger.Module
@@ -12,17 +10,19 @@ import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-object AppModule {
+object FirebaseModule {
     
     @Provides
     @Singleton
-    fun provideAuthRepository(
-        auth: FirebaseAuth,
-        firestore: FirebaseFirestore
-    ): AuthRepository {
-        return FirebaseAuthRepository(auth, firestore)
+    fun provideFirebaseAuth(): FirebaseAuth {
+        return FirebaseAuth.getInstance()
     }
     
-    // Thêm các providers khác khi cần
+    @Provides
+    @Singleton
+    fun provideFirebaseFirestore(): FirebaseFirestore {
+        return FirebaseFirestore.getInstance()
+    }
 }
+
 

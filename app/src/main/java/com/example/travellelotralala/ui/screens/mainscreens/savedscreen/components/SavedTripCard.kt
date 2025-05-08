@@ -6,8 +6,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bookmark
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -29,100 +27,68 @@ import com.example.travellelotralala.model.Trip
 @Composable
 fun SavedTripCard(
     trip: Trip,
-    onRemoveClick: () -> Unit
+    onRemoveClick: () -> Unit,
+    onClick: () -> Unit
 ) {
-    Card(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(200.dp)
-            .clickable { /* Navigate to trip details */ },
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.Transparent
-        ),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = 4.dp
-        )
+            .clip(RoundedCornerShape(16.dp))
+            .background(Color(0xFF2A2A2A)) // Màu nền tối hơn một chút so với nền chính
+            .clickable(onClick = onClick)
+            .padding(12.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Box(
-            modifier = Modifier.fillMaxSize()
+        // Trip Image
+        AsyncImage(
+            model = ImageRequest.Builder(LocalContext.current)
+                .data(trip.imageUrl)
+                .crossfade(true)
+                .build(),
+            contentDescription = trip.name,
+            modifier = Modifier
+                .size(80.dp)
+                .clip(RoundedCornerShape(12.dp)),
+            contentScale = ContentScale.Crop
+        )
+        
+        // Trip Info
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .padding(start = 16.dp)
         ) {
-            // Background Image
-            AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(trip.imageUrl)
-                    .crossfade(true)
-                    .build(),
-                contentDescription = trip.name,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .clip(RoundedCornerShape(16.dp)),
-                contentScale = ContentScale.Crop
+            Text(
+                text = trip.name,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
             
-            // Gradient overlay
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        androidx.compose.ui.graphics.Brush.verticalGradient(
-                            colors = listOf(
-                                Color.Transparent,
-                                Color.Black.copy(alpha = 0.7f)
-                            ),
-                            startY = 100f
-                        )
-                    )
+            Spacer(modifier = Modifier.height(4.dp))
+            
+            Text(
+                text = trip.description,
+                fontSize = 14.sp,
+                color = Color.LightGray,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
             )
-            
-            // Bookmark icon
-            IconButton(
-                onClick = onRemoveClick,
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(8.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Bookmark,
-                    contentDescription = "Remove from saved",
-                    tint = Color(0xFFFFAA33)
-                )
-            }
-            
-            // Trip info
-            Column(
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .padding(12.dp)
-            ) {
-                Text(
-                    text = trip.name,
-                    color = Color.White,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                
-                Spacer(modifier = Modifier.height(4.dp))
-                
-                Text(
-                    text = trip.location,
-                    color = Color.White.copy(alpha = 0.8f),
-                    fontSize = 12.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                
-                Spacer(modifier = Modifier.height(4.dp))
-                
-                Text(
-                    text = "$${trip.price}",
-                    color = Color(0xFFFFAA33),
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
+        }
+        
+        // Bookmark Icon
+        IconButton(
+            onClick = onRemoveClick,
+            modifier = Modifier.padding(start = 8.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Bookmark,
+                contentDescription = "Remove from saved",
+                tint = Color(0xFFFFAA33) // Màu cam của ứng dụng
+            )
         }
     }
 }
+
