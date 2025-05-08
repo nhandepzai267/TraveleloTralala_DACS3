@@ -40,11 +40,11 @@ fun TripDetailScreen(
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
     val isSaved by viewModel.isSaved.collectAsState()
-    
+
     LaunchedEffect(tripId) {
         viewModel.loadTrip(tripId)
     }
-    
+
     Box(modifier = Modifier.fillMaxSize()) {
         if (isLoading) {
             CircularProgressIndicator(
@@ -90,7 +90,7 @@ fun TripDetailContent(
                 .height(350.dp), // Tăng từ 300.dp lên 350.dp
             contentScale = ContentScale.Crop
         )
-        
+
         // Back Button
         IconButton(
             onClick = onBackClick,
@@ -107,7 +107,7 @@ fun TripDetailContent(
                 tint = Color.Black
             )
         }
-        
+
         // Content Card
         Column(
             modifier = Modifier
@@ -132,7 +132,7 @@ fun TripDetailContent(
                         fontWeight = FontWeight.Bold,
                         color = Color.Black
                     )
-                    
+
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.padding(top = 4.dp)
@@ -151,12 +151,12 @@ fun TripDetailContent(
                         )
                     }
                 }
-                
+
                 // Favorite Button
                 IconButton(
-                    onClick = { 
+                    onClick = {
                         Log.d("TripDetailScreen", "Bookmark button clicked, current state: $isFavorite")
-                        onFavoriteClick() 
+                        onFavoriteClick()
                     },
                     modifier = Modifier
                         .size(48.dp)
@@ -171,9 +171,9 @@ fun TripDetailContent(
                     )
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(24.dp))
-            
+
             // Description Section
             Text(
                 text = "Description",
@@ -181,18 +181,18 @@ fun TripDetailContent(
                 fontWeight = FontWeight.Bold,
                 color = Color.Black
             )
-            
+
             Spacer(modifier = Modifier.height(8.dp))
-            
+
             Text(
                 text = trip.details,
                 fontSize = 14.sp,
                 color = Color.Gray,
                 lineHeight = 20.sp
             )
-            
+
             Spacer(modifier = Modifier.height(24.dp))
-            
+
             // Price, Rating, Duration Row
             Row(
                 modifier = Modifier
@@ -217,7 +217,7 @@ fun TripDetailContent(
                         color = Color(0xFFFFAA33)
                     )
                 }
-                
+
                 // Rating - Đặt ở giữa
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -235,7 +235,7 @@ fun TripDetailContent(
                         color = Color.Black
                     )
                 }
-                
+
                 // Duration - Đặt ở bên phải
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -256,9 +256,9 @@ fun TripDetailContent(
                     )
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(32.dp))
-            
+
             // Book Now Button
             Button(
                 onClick = { /* Handle booking */ },
@@ -279,13 +279,3 @@ fun TripDetailContent(
         }
     }
 }
-
-
-
-
-
-
-
-
-
-

@@ -32,6 +32,15 @@ class TripDetailViewModel @Inject constructor(
     private val _isSaved = MutableStateFlow(false)
     val isSaved: StateFlow<Boolean> = _isSaved
     
+    // Thêm state mới cho thông báo
+    private val _snackbarMessage = MutableStateFlow<String?>(null)
+    val snackbarMessage: StateFlow<String?> = _snackbarMessage
+    
+    // Hàm để xóa thông báo sau khi hiển thị
+    fun clearSnackbarMessage() {
+        _snackbarMessage.value = null
+    }
+    
     fun loadTrip(tripId: String) {
         viewModelScope.launch {
             _isLoading.value = true
@@ -70,18 +79,23 @@ class TripDetailViewModel @Inject constructor(
                 val trip = _trip.value ?: return@launch
                 
                 // Tiếp tục với logic lưu/xóa trip
-                // Thêm log để debug
                 Log.d("TripDetailViewModel", "Toggling save for trip: ${trip.id}, current state: ${_isSaved.value}")
                 
                 if (_isSaved.value) {
                     val result = savedTripsRepository.removeTrip(trip.id)
-                    result.onFailure { e ->
+                    result.onSuccess {
+                        // Thêm thông báo khi xóa thành công
+                        _snackbarMessage.value = "Removed from saved trips"
+                    }.onFailure { e ->
                         Log.e("TripDetailViewModel", "Failed to remove trip: ${e.message}")
                         _error.value = "Failed to remove trip: ${e.message}"
                     }
                 } else {
                     val result = savedTripsRepository.saveTrip(trip)
-                    result.onFailure { e ->
+                    result.onSuccess {
+                        // Thêm thông báo khi lưu thành công
+                        _snackbarMessage.value = "Trip saved successfully"
+                    }.onFailure { e ->
                         Log.e("TripDetailViewModel", "Failed to save trip: ${e.message}")
                         _error.value = "Failed to save trip: ${e.message}"
                     }
@@ -97,6 +111,7 @@ class TripDetailViewModel @Inject constructor(
         }
     }
 }
+
 
 
 

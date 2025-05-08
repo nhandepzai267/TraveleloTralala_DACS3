@@ -1,16 +1,20 @@
-package com.example.travellelotralala.ui.screens.mainscreens.savedscreen
+package com.example.travellelotralala.ui.screens.alltrips
 
+import android.util.Log
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
@@ -19,42 +23,52 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.travellelotralala.ui.components.TabItem
-import com.example.travellelotralala.ui.components.TabSwitcher
 import com.example.travellelotralala.ui.screens.mainscreens.savedscreen.components.SavedTripCard
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SavedScreen(
-    onNavigateToTab: (TabItem) -> Unit = {},
-    onTripClick: (String) -> Unit = {}, // Tham số này sẽ được sử dụng để điều hướng
-    viewModel: SavedViewModel = hiltViewModel()
+fun AllTripsScreen(
+    onBackClick: () -> Unit,
+    onTripClick: (String) -> Unit,
+    viewModel: AllTripsViewModel = hiltViewModel()
 ) {
-    val savedTrips by viewModel.savedTrips.collectAsState()
+    val trips by viewModel.trips.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
     var searchQuery by remember { mutableStateOf("") }
-
+    
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF1E1E1E)) // Màu đen giống với HomeScreen
+            .background(Color(0xFF1E1E1E))
     ) {
-        // Header
-        Box(
+        // Top Bar with Back Button
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
+            IconButton(
+                onClick = onBackClick,
+                modifier = Modifier.size(48.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.ArrowBack,
+                    contentDescription = "Back",
+                    tint = Color.White
+                )
+            }
+            
             Text(
-                text = "Saved Places",
+                text = "All Destinations",
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.White, // Màu chữ trắng để hiển thị trên nền đen
-                modifier = Modifier.align(Alignment.CenterStart)
+                color = Color.White,
+                modifier = Modifier.padding(start = 8.dp)
             )
         }
-
+        
         // Search Bar
         OutlinedTextField(
             value = searchQuery,
@@ -96,7 +110,9 @@ fun SavedScreen(
                 color = Color.Black
             )
         )
-
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
         // Content
         if (isLoading) {
             Box(
@@ -115,13 +131,13 @@ fun SavedScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "Error loading saved trips: $error",
+                    text = "Error loading trips: $error",
                     color = Color.Red,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.padding(16.dp)
                 )
             }
-        } else if (savedTrips.isEmpty()) {
+        } else if (trips.isEmpty()) {
             Box(
                 modifier = Modifier
                     .weight(1f)
@@ -129,7 +145,7 @@ fun SavedScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "You haven't saved any trips yet",
+                    text = "No trips found",
                     color = Color.White,
                     fontSize = 16.sp,
                     textAlign = TextAlign.Center
@@ -145,24 +161,76 @@ fun SavedScreen(
                 contentPadding = PaddingValues(vertical = 16.dp)
             ) {
                 items(
-                    items = savedTrips.filter {
-                        searchQuery.isEmpty() || it.name.contains(searchQuery, ignoreCase = true)
+                    items = trips.filter { 
+                        searchQuery.isEmpty() || it.name.contains(searchQuery, ignoreCase = true) 
                     },
                     key = { it.id }
                 ) { trip ->
-                    SavedTripCard(
+                    TripListItem(
                         trip = trip,
-                        onRemoveClick = { viewModel.removeFromSaved(trip.id) },
-                        onClick = { onTripClick(trip.id) } // Gọi callback với ID của trip
+                        onClick = { 
+                            Log.d("AllTripsScreen", "Trip clicked: ${trip.id}")
+                            onTripClick(trip.id) 
+                        }
                     )
                 }
             }
         }
+    }
+}
 
-        // Bottom Navigation
-        TabSwitcher(
-            currentTab = TabItem.SAVED,
-            onTabSelected = onNavigateToTab
+@Composable
+fun TripListItem(
+    trip: com.example.travellelotralala.model.Trip,
+    onClick: () -> Unit
+) {
+    // Sử dụng lại SavedTripCard nhưng không có nút xóa
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(Color(0xFF2A2A2A))
+            .clickable(onClick = onClick)
+            .padding(12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Trip Image
+        androidx.compose.foundation.Image(
+            painter = coil.compose.rememberAsyncImagePainter(
+                model = trip.imageUrl,
+                contentScale = androidx.compose.ui.layout.ContentScale.Crop
+            ),
+            contentDescription = trip.name,
+            modifier = Modifier
+                .size(80.dp)
+                .clip(RoundedCornerShape(12.dp)),
+            contentScale = androidx.compose.ui.layout.ContentScale.Crop
         )
+        
+        // Trip Info
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .padding(start = 16.dp)
+        ) {
+            Text(
+                text = trip.name,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+                maxLines = 1,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+            )
+            
+            Spacer(modifier = Modifier.height(4.dp))
+            
+            Text(
+                text = trip.description,
+                fontSize = 14.sp,
+                color = Color.LightGray,
+                maxLines = 2,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+            )
+        }
     }
 }

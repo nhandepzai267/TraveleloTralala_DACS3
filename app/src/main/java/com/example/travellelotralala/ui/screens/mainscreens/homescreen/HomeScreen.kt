@@ -38,6 +38,7 @@ import com.example.travellelotralala.ui.screens.mainscreens.homescreen.component
 fun HomeScreen(
     onDestinationClick: (String) -> Unit = {},
     onNavigateToTab: (TabItem) -> Unit = {},
+    onSeeAllClick: () -> Unit = {}, // Thêm callback mới
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     var searchQuery by remember { mutableStateOf("") }
@@ -170,7 +171,7 @@ fun HomeScreen(
                 color = Color(0xFFFFAA33),
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
-                    .clickable { /* Handle See All click */ }
+                    .clickable { onSeeAllClick() } // Sử dụng callback mới
             )
         }
 

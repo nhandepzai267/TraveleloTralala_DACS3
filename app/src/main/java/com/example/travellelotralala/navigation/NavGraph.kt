@@ -25,6 +25,7 @@ import com.example.travellelotralala.ui.screens.mainscreens.homescreen.HomeScree
 import com.example.travellelotralala.ui.screens.mainscreens.notificationsscreen.NotificationsScreen
 import com.example.travellelotralala.ui.screens.mainscreens.savedscreen.SavedScreen
 import com.example.travellelotralala.ui.screens.tripdetail.TripDetailScreen
+import com.example.travellelotralala.ui.screens.alltrips.AllTripsScreen
 
 sealed class Screen(val route: String) {
     object Welcome : Screen("welcome")
@@ -40,6 +41,7 @@ sealed class Screen(val route: String) {
     object TripDetail : Screen("trip_detail/{tripId}") {
         fun createRoute(tripId: String) = "trip_detail/$tripId"
     }
+    object AllTrips : Screen("all_trips")
 }
 
 @Composable
@@ -107,6 +109,9 @@ fun NavGraph(
                 },
                 onNavigateToTab = { tab ->
                     navigateToTab(navController, tab, Screen.Home.route)
+                },
+                onSeeAllClick = {
+                    navController.navigate(Screen.AllTrips.route)
                 }
             )
         }
@@ -156,6 +161,14 @@ fun NavGraph(
                 onBackClick = { navController.popBackStack() }
             )
         }
+        composable(Screen.AllTrips.route) {
+            AllTripsScreen(
+                onBackClick = { navController.popBackStack() },
+                onTripClick = { tripId ->
+                    navController.navigate(Screen.TripDetail.createRoute(tripId))
+                }
+            )
+        }
     }
 }
 
@@ -174,6 +187,8 @@ private fun navigateToTab(navController: NavHostController, tab: TabItem, curren
         }
     }
 }
+
+
 
 
 
