@@ -26,6 +26,7 @@ import com.example.travellelotralala.ui.screens.mainscreens.notificationsscreen.
 import com.example.travellelotralala.ui.screens.mainscreens.savedscreen.SavedScreen
 import com.example.travellelotralala.ui.screens.tripdetail.TripDetailScreen
 import com.example.travellelotralala.ui.screens.alltrips.AllTripsScreen
+import com.example.travellelotralala.ui.screens.booking.BookingScreen
 
 sealed class Screen(val route: String) {
     object Welcome : Screen("welcome")
@@ -42,6 +43,9 @@ sealed class Screen(val route: String) {
         fun createRoute(tripId: String) = "trip_detail/$tripId"
     }
     object AllTrips : Screen("all_trips")
+    object Booking : Screen("booking/{tripId}") {
+        fun createRoute(tripId: String) = "booking/$tripId"
+    }
 }
 
 @Composable
@@ -158,7 +162,13 @@ fun NavGraph(
             Log.d("NavGraph", "TripDetail screen with ID: $tripId")
             TripDetailScreen(
                 tripId = tripId,
-                onBackClick = { navController.popBackStack() }
+                onBackClick = { navController.popBackStack() },
+                onNavigateToLogin = {
+                    navController.navigate(Screen.Login.route)
+                },
+                onNavigateToBooking = { tripId ->
+                    navController.navigate(Screen.Booking.createRoute(tripId))
+                }
             )
         }
         composable(Screen.AllTrips.route) {
@@ -166,6 +176,21 @@ fun NavGraph(
                 onBackClick = { navController.popBackStack() },
                 onTripClick = { tripId ->
                     navController.navigate(Screen.TripDetail.createRoute(tripId))
+                }
+            )
+        }
+        composable(
+            route = Screen.Booking.route,
+            arguments = listOf(navArgument("tripId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val tripId = backStackEntry.arguments?.getString("tripId") ?: ""
+            BookingScreen(
+                tripId = tripId,
+                onBackClick = { navController.popBackStack() },
+                onBookingComplete = {
+                    navController.navigate(Screen.Bookings.route) {
+                        popUpTo(Screen.Booking.route) { inclusive = true }
+                    }
                 }
             )
         }
@@ -187,6 +212,8 @@ private fun navigateToTab(navController: NavHostController, tab: TabItem, curren
         }
     }
 }
+
+
 
 
 
