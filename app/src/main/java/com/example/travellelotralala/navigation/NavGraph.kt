@@ -6,8 +6,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -27,6 +31,10 @@ import com.example.travellelotralala.ui.screens.mainscreens.savedscreen.SavedScr
 import com.example.travellelotralala.ui.screens.tripdetail.TripDetailScreen
 import com.example.travellelotralala.ui.screens.alltrips.AllTripsScreen
 import com.example.travellelotralala.ui.screens.booking.BookingScreen
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.travellelotralala.ui.screens.booking.BookingConfirmationScreen
+import com.example.travellelotralala.ui.screens.booking.BookingConfirmationViewModel
 
 sealed class Screen(val route: String) {
     object Welcome : Screen("welcome")
@@ -45,6 +53,9 @@ sealed class Screen(val route: String) {
     object AllTrips : Screen("all_trips")
     object Booking : Screen("booking/{tripId}") {
         fun createRoute(tripId: String) = "booking/$tripId"
+    }
+    object BookingConfirmation : Screen("booking_confirmation/{bookingId}") {
+        fun createRoute(bookingId: String) = "booking_confirmation/$bookingId"
     }
 }
 
@@ -187,12 +198,68 @@ fun NavGraph(
             BookingScreen(
                 tripId = tripId,
                 onBackClick = { navController.popBackStack() },
-                onBookingComplete = {
-                    navController.navigate(Screen.Bookings.route) {
+                onBookingComplete = { bookingId ->
+                    navController.navigate(Screen.BookingConfirmation.createRoute(bookingId)) {
                         popUpTo(Screen.Booking.route) { inclusive = true }
                     }
                 }
             )
+        }
+        composable(
+            route = Screen.BookingConfirmation.route,
+            arguments = listOf(
+                navArgument("bookingId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val bookingId = backStackEntry.arguments?.getString("bookingId") ?: ""
+            val viewModel: BookingConfirmationViewModel = hiltViewModel()
+            
+            LaunchedEffect(bookingId) {
+                viewModel.loadBookingDetails(bookingId)
+            }
+            
+            val bookingDetails by viewModel.bookingDetails.collectAsState()
+            val isLoading by viewModel.isLoading.collectAsState()
+            val error by viewModel.error.collectAsState()
+            val tripLocation by viewModel.tripLocation.collectAsState()
+            
+            if (isLoading) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = Color(0xFFFFA07A))
+                }
+            } else if (error != null) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Error: $error",
+                        color = Color.Red,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
+            } else if (bookingDetails != null) {
+                val booking = bookingDetails!!
+                BookingConfirmationScreen(
+                    bookingId = booking.id,
+                    tripName = booking.tripName,
+                    tripImageUrl = booking.tripImageUrl,
+                    location = tripLocation ?: "",
+                    travelDate = booking.travelDate,
+                    numberOfTravelers = booking.numberOfTravelers,
+                    totalPrice = booking.totalPrice,
+                    contactName = booking.contactInfo["name"] ?: "",
+                    contactEmail = booking.contactInfo["email"] ?: "",
+                    onDoneClick = {
+                        navController.navigate(Screen.Bookings.route) {
+                            popUpTo(Screen.BookingConfirmation.route) { inclusive = true }
+                        }
+                    }
+                )
+            }
         }
     }
 }
@@ -212,6 +279,10 @@ private fun navigateToTab(navController: NavHostController, tab: TabItem, curren
         }
     }
 }
+
+
+
+
 
 
 

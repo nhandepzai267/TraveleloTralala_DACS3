@@ -45,7 +45,7 @@ import java.util.*
 fun BookingScreen(
     tripId: String,
     onBackClick: () -> Unit,
-    onBookingComplete: () -> Unit,
+    onBookingComplete: (String) -> Unit, // Thay đổi thành (String) -> Unit
     viewModel: BookingViewModel = hiltViewModel()
 ) {
     val trip by viewModel.trip.collectAsState()
@@ -182,12 +182,13 @@ fun BookingScreen(
                             Spacer(modifier = Modifier.width(16.dp))
                             
                             // Trip Details
-                            Column {
+                            Column(verticalArrangement = Arrangement.Top) {
                                 Text(
                                     text = trip!!.name,
                                     fontSize = 20.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = Color.White
+                                    color = Color.White,
+                                    modifier = Modifier.padding(bottom = 4.dp) // Thêm padding cố định ở dưới tên
                                 )
                                 
                                 Text(
@@ -654,7 +655,9 @@ fun BookingScreen(
                                     tripId = trip!!.id,
                                     numberOfTravelers = guestCount,
                                     travelDate = selectedDate!!,
-                                    onSuccess = onBookingComplete
+                                    onSuccess = { bookingId -> // Nhận bookingId từ ViewModel
+                                        onBookingComplete(bookingId) // Truyền bookingId
+                                    }
                                 )
                             }
                         },
@@ -709,6 +712,10 @@ fun DatePicker(
         showModeToggle = showModeToggle
     )
 }
+
+
+
+
 
 
 

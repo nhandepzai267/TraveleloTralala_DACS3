@@ -1,5 +1,6 @@
 package com.example.travellelotralala.ui.screens.booking
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.travellelotralala.model.Trip
@@ -35,9 +36,11 @@ class BookingViewModel @Inject constructor(
             tripRepository.getTripById(tripId)
                 .onSuccess { trip ->
                     _trip.value = trip
+                    Log.d("BookingViewModel", "Trip loaded: ${trip.name}, imageUrl: ${trip.imageUrl}")
                 }
                 .onFailure { exception ->
                     _error.value = exception.message
+                    Log.e("BookingViewModel", "Error loading trip: ${exception.message}")
                 }
             
             _isLoading.value = false
@@ -48,7 +51,7 @@ class BookingViewModel @Inject constructor(
         tripId: String,
         numberOfTravelers: Int,
         travelDate: LocalDate,
-        onSuccess: () -> Unit
+        onSuccess: (String) -> Unit
     ) {
         viewModelScope.launch {
             _isLoading.value = true
@@ -56,6 +59,9 @@ class BookingViewModel @Inject constructor(
             
             val trip = _trip.value
             if (trip != null) {
+                Log.d("BookingViewModel", "Creating booking for trip: ${trip.name}")
+                Log.d("BookingViewModel", "Trip image URL: ${trip.imageUrl}")
+                
                 bookingRepository.createBooking(
                     tripId = tripId,
                     tripName = trip.name,
@@ -63,16 +69,20 @@ class BookingViewModel @Inject constructor(
                     numberOfTravelers = numberOfTravelers,
                     totalPrice = trip.price * numberOfTravelers,
                     travelDate = travelDate
-                ).onSuccess {
-                    onSuccess()
+                ).onSuccess { bookingId ->
+                    Log.d("BookingViewModel", "Booking created successfully")
+                    onSuccess(bookingId)
                 }.onFailure { exception ->
                     _error.value = exception.message
+                    Log.e("BookingViewModel", "Error creating booking: ${exception.message}")
                 }
             } else {
                 _error.value = "Trip information not available"
+                Log.e("BookingViewModel", "Trip information not available")
             }
             
             _isLoading.value = false
         }
     }
 }
+
