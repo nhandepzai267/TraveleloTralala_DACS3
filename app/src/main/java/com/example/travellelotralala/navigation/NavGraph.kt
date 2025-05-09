@@ -24,7 +24,7 @@ import com.example.travellelotralala.ui.screens.WelcomeScreen
 import com.example.travellelotralala.ui.screens.authscreens.AuthScreen
 import com.example.travellelotralala.ui.screens.authscreens.login.LoginScreen
 import com.example.travellelotralala.ui.screens.authscreens.signup.SignupScreen
-import com.example.travellelotralala.ui.screens.mainscreens.bookingsscreen.BookingsScreen
+import com.example.travellelotralala.ui.screens.mainscreens.bookedtripsscreen.BookedTripsScreen
 import com.example.travellelotralala.ui.screens.mainscreens.homescreen.HomeScreen
 import com.example.travellelotralala.ui.screens.mainscreens.notificationsscreen.NotificationsScreen
 import com.example.travellelotralala.ui.screens.mainscreens.savedscreen.SavedScreen
@@ -35,6 +35,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.travellelotralala.ui.screens.booking.BookingConfirmationScreen
 import com.example.travellelotralala.ui.screens.booking.BookingConfirmationViewModel
+import com.example.travellelotralala.ui.screens.bookingdetail.BookingDetailScreen
 
 sealed class Screen(val route: String) {
     object Welcome : Screen("welcome")
@@ -56,6 +57,9 @@ sealed class Screen(val route: String) {
     }
     object BookingConfirmation : Screen("booking_confirmation/{bookingId}") {
         fun createRoute(bookingId: String) = "booking_confirmation/$bookingId"
+    }
+    object BookingDetail : Screen("booking_detail/{bookingId}") {
+        fun createRoute(bookingId: String): String = "booking_detail/$bookingId"
     }
 }
 
@@ -143,9 +147,35 @@ fun NavGraph(
         }
         
         composable(Screen.Bookings.route) {
-            BookingsScreen(
-                onNavigateToTab = { tab ->
-                    navigateToTab(navController, tab, Screen.Bookings.route)
+            BookedTripsScreen(
+                onNavigateToTab = { tabItem ->
+                    when (tabItem) {
+                        TabItem.HOME -> navController.navigate(Screen.Home.route) {
+                            popUpTo(Screen.Home.route) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                        TabItem.SAVED -> navController.navigate(Screen.Saved.route) {
+                            popUpTo(Screen.Saved.route) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                        TabItem.BOOKINGS -> { /* Already on Bookings screen */ }
+                        TabItem.NOTIFICATIONS -> navController.navigate(Screen.Notifications.route) {
+                            popUpTo(Screen.Notifications.route) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    }
+                },
+                onBookingClick = { bookingId ->
+                    navController.navigate(Screen.BookingDetail.createRoute(bookingId))
                 }
             )
         }
@@ -261,6 +291,18 @@ fun NavGraph(
                 )
             }
         }
+        composable(
+            route = Screen.BookingDetail.route,
+            arguments = listOf(
+                navArgument("bookingId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val bookingId = backStackEntry.arguments?.getString("bookingId") ?: ""
+            BookingDetailScreen(
+                bookingId = bookingId,
+                onBackClick = { navController.popBackStack() }
+            )
+        }
     }
 }
 
@@ -275,10 +317,21 @@ private fun navigateToTab(navController: NavHostController, tab: TabItem, curren
     
     if (targetRoute != currentRoute) {
         navController.navigate(targetRoute) {
-            popUpTo(currentRoute) { inclusive = true }
+            popUpTo(targetRoute) {
+                saveState = true
+            }
+            launchSingleTop = true
+            restoreState = true
         }
     }
 }
+
+
+
+
+
+
+
 
 
 
