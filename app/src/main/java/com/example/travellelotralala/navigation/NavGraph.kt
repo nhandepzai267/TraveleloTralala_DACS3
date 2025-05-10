@@ -36,6 +36,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.travellelotralala.ui.screens.booking.BookingConfirmationScreen
 import com.example.travellelotralala.ui.screens.booking.BookingConfirmationViewModel
 import com.example.travellelotralala.ui.screens.bookingdetail.BookingDetailScreen
+import com.example.travellelotralala.ui.screens.notificationdetail.NotificationDetailScreen
 
 sealed class Screen(val route: String) {
     object Welcome : Screen("welcome")
@@ -60,6 +61,9 @@ sealed class Screen(val route: String) {
     }
     object BookingDetail : Screen("booking_detail/{bookingId}") {
         fun createRoute(bookingId: String): String = "booking_detail/$bookingId"
+    }
+    object NotificationDetail : Screen("notification_detail/{notificationId}") {
+        fun createRoute(notificationId: String) = "notification_detail/$notificationId"
     }
 }
 
@@ -184,6 +188,9 @@ fun NavGraph(
             NotificationsScreen(
                 onNavigateToTab = { tab ->
                     navigateToTab(navController, tab, Screen.Notifications.route)
+                },
+                onNotificationClick = { notificationId ->
+                    navController.navigate(Screen.NotificationDetail.createRoute(notificationId))
                 }
             )
         }
@@ -303,6 +310,23 @@ fun NavGraph(
                 onBackClick = { navController.popBackStack() }
             )
         }
+        composable(
+            route = Screen.NotificationDetail.route,
+            arguments = listOf(
+                navArgument("notificationId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val notificationId = backStackEntry.arguments?.getString("notificationId") ?: ""
+            NotificationDetailScreen(
+                notificationId = notificationId,
+                onBackClick = {
+                    navController.popBackStack()
+                },
+                onNavigateToTrip = { tripId ->
+                    navController.navigate(Screen.TripDetail.createRoute(tripId))
+                }
+            )
+        }
     }
 }
 
@@ -325,24 +349,6 @@ private fun navigateToTab(navController: NavHostController, tab: TabItem, curren
         }
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
