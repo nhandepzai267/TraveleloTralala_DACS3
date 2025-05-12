@@ -16,5 +16,12 @@ data class Booking(
     val paymentStatus: String = "UNPAID", // UNPAID, PAID
     val contactInfo: Map<String, String> = emptyMap(),
     val specialRequests: String = "",
-    val updatedAt: Date = Date()
+    val updatedAt: Date = Date(),
+    // Thêm các trường mới cho khách sạn và phòng
+    val hotelId: String = "",
+    val hotelName: String = "",
+    val roomTypeId: String = "",
+    val roomTypeName: String = "",
+    val roomNumber: String = "",
+    val hotelBooked: Boolean = false // Để biết người dùng đã chọn khách sạn/phòng chưa
 )

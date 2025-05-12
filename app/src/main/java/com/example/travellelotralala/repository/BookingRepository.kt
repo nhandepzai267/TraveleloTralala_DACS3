@@ -134,5 +134,49 @@ class BookingRepository @Inject constructor(
             Result.failure(e)
         }
     }
+
+    // Thêm hàm mới để cập nhật thông tin khách sạn và phòng
+    suspend fun updateBookingWithHotelInfo(
+        bookingId: String,
+        hotelId: String,
+        hotelName: String,
+        roomTypeId: String,
+        roomTypeName: String,
+        roomNumber: String
+    ): Result<Unit> {
+        return try {
+            val currentUser = auth.currentUser
+                ?: return Result.failure(Exception("User not authenticated"))
+            
+            // Kiểm tra xem booking có thuộc về người dùng hiện tại không
+            val bookingResult = getBookingById(bookingId)
+            val booking = bookingResult.getOrNull()
+                ?: return Result.failure(Exception("Booking not found"))
+            
+            if (booking.userId != currentUser.uid) {
+                return Result.failure(Exception("You don't have permission to update this booking"))
+            }
+            
+            // Cập nhật thông tin khách sạn và phòng
+            bookingsCollection.document(bookingId)
+                .update(
+                    mapOf(
+                        "hotelId" to hotelId,
+                        "hotelName" to hotelName,
+                        "roomTypeId" to roomTypeId,
+                        "roomTypeName" to roomTypeName,
+                        "roomNumber" to roomNumber,
+                        "hotelBooked" to true,
+                        "updatedAt" to Date()
+                    )
+                )
+                .await()
+            
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }
+
 

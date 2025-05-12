@@ -36,7 +36,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.travellelotralala.ui.screens.booking.BookingConfirmationScreen
 import com.example.travellelotralala.ui.screens.booking.BookingConfirmationViewModel
 import com.example.travellelotralala.ui.screens.bookingdetail.BookingDetailScreen
+import com.example.travellelotralala.ui.screens.hotels.HotelsScreen
+import com.example.travellelotralala.ui.screens.hotels.hoteldetail.HotelDetailScreen
 import com.example.travellelotralala.ui.screens.notificationdetail.NotificationDetailScreen
+import com.example.travellelotralala.ui.screens.hotels.roomdetail.RoomDetailScreen
 
 sealed class Screen(val route: String) {
     object Welcome : Screen("welcome")
@@ -64,6 +67,17 @@ sealed class Screen(val route: String) {
     }
     object NotificationDetail : Screen("notification_detail/{notificationId}") {
         fun createRoute(notificationId: String) = "notification_detail/$notificationId"
+    }
+    object Hotels : Screen("hotels/{location}") {
+        fun createRoute(location: String) = "hotels/$location"
+    }
+    object HotelDetail : Screen("hotel_detail/{hotelId}") {
+        fun createRoute(hotelId: String) = "hotel_detail/$hotelId"
+    }
+    object RoomDetail : Screen("room_detail/{hotelId}/{roomTypeId}") {
+        fun createRoute(hotelId: String, roomTypeId: String): String {
+            return "room_detail/$hotelId/$roomTypeId"
+        }
     }
 }
 
@@ -239,6 +253,9 @@ fun NavGraph(
                     navController.navigate(Screen.BookingConfirmation.createRoute(bookingId)) {
                         popUpTo(Screen.Booking.route) { inclusive = true }
                     }
+                },
+                onViewHotels = { location ->
+                    navController.navigate(Screen.Hotels.createRoute(location))
                 }
             )
         }
@@ -327,6 +344,55 @@ fun NavGraph(
                 }
             )
         }
+        composable(
+            route = Screen.Hotels.route,
+            arguments = listOf(
+                navArgument("location") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val location = backStackEntry.arguments?.getString("location") ?: ""
+            HotelsScreen(
+                location = location,
+                onBackClick = { navController.popBackStack() },
+                onHotelClick = { hotelId ->
+                    navController.navigate(Screen.HotelDetail.createRoute(hotelId))
+                }
+            )
+        }
+        composable(
+            route = Screen.HotelDetail.route,
+            arguments = listOf(
+                navArgument("hotelId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val hotelId = backStackEntry.arguments?.getString("hotelId") ?: ""
+            HotelDetailScreen(
+                hotelId = hotelId,
+                onBackClick = { navController.popBackStack() },
+                onBookRoom = { hotelId, roomTypeId ->
+                    navController.navigate(Screen.RoomDetail.createRoute(hotelId, roomTypeId))
+                }
+            )
+        }
+        composable(
+            route = Screen.RoomDetail.route,
+            arguments = listOf(
+                navArgument("hotelId") { type = NavType.StringType },
+                navArgument("roomTypeId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val hotelId = backStackEntry.arguments?.getString("hotelId") ?: ""
+            val roomTypeId = backStackEntry.arguments?.getString("roomTypeId") ?: ""
+            RoomDetailScreen(
+                hotelId = hotelId,
+                roomTypeId = roomTypeId,
+                onBackClick = { navController.popBackStack() },
+                onBookRoom = { hotelId, roomTypeId, roomNumber ->
+                    // Có thể thêm điều hướng đến màn hình xác nhận đặt phòng sau này
+                    // navController.navigate(Screen.BookingConfirmation.createRoute(hotelId, roomTypeId, roomNumber))
+                }
+            )
+        }
     }
 }
 
@@ -349,6 +415,17 @@ private fun navigateToTab(navController: NavHostController, tab: TabItem, curren
         }
     }
 }
+
+
+
+
+
+
+
+
+
+
+
 
 
 

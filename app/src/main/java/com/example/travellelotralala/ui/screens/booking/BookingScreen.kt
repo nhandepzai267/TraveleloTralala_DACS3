@@ -46,16 +46,17 @@ fun BookingScreen(
     tripId: String,
     onBackClick: () -> Unit,
     onBookingComplete: (String) -> Unit, // Thay đổi thành (String) -> Unit
+    onViewHotels: (String) -> Unit, // Thêm callback mới
     viewModel: BookingViewModel = hiltViewModel()
 ) {
     val trip by viewModel.trip.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
-    
+
     var selectedDate by remember { mutableStateOf<LocalDate?>(null) }
     var guestCount by remember { mutableStateOf(1) }
     var showDatePicker by remember { mutableStateOf(false) }
-    
+
     // Xử lý hiển thị DatePicker
     if (showDatePicker) {
         DatePickerDialog(
@@ -85,7 +86,7 @@ fun BookingScreen(
             )
         }
     }
-    
+
     LaunchedEffect(tripId) {
         viewModel.loadTrip(tripId)
     }
@@ -95,11 +96,11 @@ fun BookingScreen(
         topBar = {
             // TopAppBar với contentPadding = PaddingValues(0.dp) để loại bỏ padding mặc định
             TopAppBar(
-                title = { 
+                title = {
                     Text(
-                        "Checkout", 
+                        "Checkout",
                         color = Color.White
-                    ) 
+                    )
                 },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
@@ -158,7 +159,7 @@ fun BookingScreen(
                             .padding(horizontal = 16.dp)
                     ) {
                         // Nội dung không thay đổi
-                        // ...                        
+                        // ...
                         // Trip Info Card
                         Row(
                             modifier = Modifier
@@ -178,9 +179,9 @@ fun BookingScreen(
                                     .clip(RoundedCornerShape(12.dp)),
                                 contentScale = ContentScale.Crop
                             )
-                            
+
                             Spacer(modifier = Modifier.width(16.dp))
-                            
+
                             // Trip Details
                             Column(verticalArrangement = Arrangement.Top) {
                                 Text(
@@ -190,7 +191,7 @@ fun BookingScreen(
                                     color = Color.White,
                                     modifier = Modifier.padding(bottom = 4.dp) // Thêm padding cố định ở dưới tên
                                 )
-                                
+
                                 Text(
                                     text = trip!!.location,
                                     fontSize = 14.sp,
@@ -198,7 +199,7 @@ fun BookingScreen(
                                 )
                             }
                         }
-                        
+
                         // Non-refundable Notice
                         Card(
                             modifier = Modifier
@@ -221,9 +222,9 @@ fun BookingScreen(
                                     tint = Color.Gray,
                                     modifier = Modifier.size(20.dp)
                                 )
-                                
+
                                 Spacer(modifier = Modifier.width(8.dp))
-                                
+
                                 Column {
                                     Text(
                                         text = "Non-refundable",
@@ -231,7 +232,7 @@ fun BookingScreen(
                                         fontWeight = FontWeight.Medium,
                                         color = Color.White
                                     )
-                                    
+
                                     Text(
                                         text = "You can not refund your payment.",
                                         fontSize = 14.sp,
@@ -240,9 +241,9 @@ fun BookingScreen(
                                 }
                             }
                         }
-                        
+
                         Spacer(modifier = Modifier.height(16.dp))
-                        
+
                         // Trip Details Card
                         Card(
                             modifier = Modifier
@@ -264,9 +265,9 @@ fun BookingScreen(
                                     fontWeight = FontWeight.Medium,
                                     color = Color.White
                                 )
-                                
+
                                 Spacer(modifier = Modifier.height(8.dp))
-                                
+
                                 // Duration
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
@@ -278,18 +279,18 @@ fun BookingScreen(
                                         tint = Color(0xFFFFAA33),
                                         modifier = Modifier.size(20.dp)
                                     )
-                                    
+
                                     Spacer(modifier = Modifier.width(8.dp))
-                                    
+
                                     Text(
                                         text = "Duration: ${trip!!.durationUnit}",
                                         fontSize = 14.sp,
                                         color = Color.White
                                     )
                                 }
-                                
+
                                 Spacer(modifier = Modifier.height(8.dp))
-                                
+
                                 // Rating
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
@@ -301,18 +302,18 @@ fun BookingScreen(
                                         tint = Color(0xFFFFAA33),
                                         modifier = Modifier.size(20.dp)
                                     )
-                                    
+
                                     Spacer(modifier = Modifier.width(8.dp))
-                                    
+
                                     Text(
                                         text = "Rating: ${trip!!.rating}",
                                         fontSize = 14.sp,
                                         color = Color.White
                                     )
                                 }
-                                
+
                                 Spacer(modifier = Modifier.height(8.dp))
-                                
+
                                 // Category
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
@@ -324,20 +325,20 @@ fun BookingScreen(
                                         tint = Color(0xFFFFAA33),
                                         modifier = Modifier.size(20.dp)
                                     )
-                                    
+
                                     Spacer(modifier = Modifier.width(8.dp))
-                                    
+
                                     Text(
                                         text = "Category: ${trip!!.category}",
                                         fontSize = 14.sp,
                                         color = Color.White
                                     )
                                 }
-                                
+
                                 // Hiển thị mô tả ngắn về chuyến đi
                                 if (trip!!.description.isNotEmpty()) {
                                     Spacer(modifier = Modifier.height(8.dp))
-                                    
+
                                     Text(
                                         text = trip!!.description,
                                         fontSize = 14.sp,
@@ -348,7 +349,37 @@ fun BookingScreen(
                                 }
                             }
                         }
-                        
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // View Hotels Button
+                        Button(
+                            onClick = { trip?.location?.let { onViewHotels(it) } },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF2A2A2A),
+                                contentColor = Color.White
+                            ),
+                            shape = RoundedCornerShape(12.dp),
+                            enabled = trip != null
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Info,
+                                    contentDescription = "View Hotels",
+                                    tint = Color(0xFFFFAA33)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "View Hotels in ${trip?.location ?: ""}",
+                                    fontSize = 14.sp
+                                )
+                            }
+                        }
+
                         Spacer(modifier = Modifier.height(16.dp))
 
                         // What's Included Card
@@ -372,34 +403,34 @@ fun BookingScreen(
                                     fontWeight = FontWeight.Medium,
                                     color = Color.White
                                 )
-                                
+
                                 Spacer(modifier = Modifier.height(8.dp))
-                                
+
                                 // Hiển thị danh sách các dịch vụ được bao gồm dựa vào loại trip
                                 val includedServices = when {
                                     trip!!.price > 300 -> listOf(
-                                        "Flights", 
-                                        "Hotel (5-star)", 
-                                        "All Meals", 
-                                        "Airport Transfer", 
+                                        "Flights",
+                                        "Hotel (5-star)",
+                                        "All Meals",
+                                        "Airport Transfer",
                                         "Tour Guide",
                                         "All Activities"
                                     )
                                     trip!!.price > 200 -> listOf(
-                                        "Hotel (4-star)", 
-                                        "Breakfast & Dinner", 
-                                        "Airport Transfer", 
+                                        "Hotel (4-star)",
+                                        "Breakfast & Dinner",
+                                        "Airport Transfer",
                                         "Tour Guide",
                                         "Selected Activities"
                                     )
                                     else -> listOf(
-                                        "Hotel (3-star)", 
-                                        "Breakfast", 
+                                        "Hotel (3-star)",
+                                        "Breakfast",
                                         "Tour Guide",
                                         "Basic Activities"
                                     )
                                 }
-                                
+
                                 includedServices.forEach { service ->
                                     Row(
                                         modifier = Modifier
@@ -413,9 +444,9 @@ fun BookingScreen(
                                             tint = Color(0xFFFFAA33),
                                             modifier = Modifier.size(16.dp)
                                         )
-                                        
+
                                         Spacer(modifier = Modifier.width(8.dp))
-                                        
+
                                         Text(
                                             text = service,
                                             fontSize = 14.sp,
@@ -427,7 +458,7 @@ fun BookingScreen(
                         }
 
                         Spacer(modifier = Modifier.height(16.dp))
-                        
+
                         // Date Selection
                         Text(
                             text = "Select Travel Date",
@@ -435,9 +466,9 @@ fun BookingScreen(
                             fontWeight = FontWeight.Medium,
                             color = Color.White
                         )
-                        
+
                         Spacer(modifier = Modifier.height(8.dp))
-                        
+
                         OutlinedButton(
                             onClick = { showDatePicker = true },
                             modifier = Modifier
@@ -460,7 +491,7 @@ fun BookingScreen(
                                     ) ?: "Select Date",
                                     color = if (selectedDate != null) Color.White else Color.Gray
                                 )
-                                
+
                                 Icon(
                                     imageVector = Icons.Default.CalendarMonth,
                                     contentDescription = "Select Date",
@@ -468,9 +499,9 @@ fun BookingScreen(
                                 )
                             }
                         }
-                        
+
                         Spacer(modifier = Modifier.height(24.dp))
-                        
+
                         // Guest Count
                         Text(
                             text = "Number of Travelers",
@@ -478,9 +509,9 @@ fun BookingScreen(
                             fontWeight = FontWeight.Medium,
                             color = Color.White
                         )
-                        
+
                         Spacer(modifier = Modifier.height(8.dp))
-                        
+
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -507,7 +538,7 @@ fun BookingScreen(
                                     tint = Color.White
                                 )
                             }
-                            
+
                             // Guest Count
                             Text(
                                 text = guestCount.toString(),
@@ -515,7 +546,7 @@ fun BookingScreen(
                                 fontWeight = FontWeight.Medium,
                                 color = Color.White
                             )
-                            
+
                             // Increase Button
                             IconButton(
                                 onClick = { guestCount++ },
@@ -531,9 +562,9 @@ fun BookingScreen(
                                 )
                             }
                         }
-                        
+
                         Spacer(modifier = Modifier.height(24.dp))
-                        
+
                         // Price Summary
                         Text(
                             text = "Price Summary",
@@ -541,9 +572,9 @@ fun BookingScreen(
                             fontWeight = FontWeight.Medium,
                             color = Color.White
                         )
-                        
+
                         Spacer(modifier = Modifier.height(8.dp))
-                        
+
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
@@ -553,7 +584,7 @@ fun BookingScreen(
                                 fontSize = 14.sp,
                                 color = Color.Gray
                             )
-                            
+
                             Text(
                                 text = "$${trip!!.price}",
                                 fontSize = 14.sp,
@@ -561,9 +592,9 @@ fun BookingScreen(
                                 color = Color.White
                             )
                         }
-                        
+
                         Spacer(modifier = Modifier.height(8.dp))
-                        
+
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
@@ -573,7 +604,7 @@ fun BookingScreen(
                                 fontSize = 14.sp,
                                 color = Color.Gray
                             )
-                            
+
                             Text(
                                 text = guestCount.toString(),
                                 fontSize = 14.sp,
@@ -581,13 +612,13 @@ fun BookingScreen(
                                 color = Color.White
                             )
                         }
-                        
+
                         Spacer(modifier = Modifier.height(8.dp))
-                        
+
                         Divider(color = Color.DarkGray)
-                        
+
                         Spacer(modifier = Modifier.height(8.dp))
-                        
+
                         // Tính và hiển thị tổng giá tiền
                         val totalPrice = trip!!.price * guestCount
                         Row(
@@ -600,7 +631,7 @@ fun BookingScreen(
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White
                             )
-                            
+
                             Text(
                                 text = "$${totalPrice}",
                                 fontSize = 16.sp,
@@ -632,9 +663,9 @@ fun BookingScreen(
                                     .size(18.dp)
                                     .padding(top = 2.dp)
                             )
-                            
+
                             Spacer(modifier = Modifier.width(8.dp))
-                            
+
                             Text(
                                 text = "The total price includes $includedServices.",
                                 fontSize = 14.sp,
@@ -646,7 +677,7 @@ fun BookingScreen(
                         // Thêm khoảng trống ở cuối để tránh che nút
                         Spacer(modifier = Modifier.height(80.dp))
                     }
-                    
+
                     // Buy Ticket Button - Di chuyển ra ngoài và đặt ở dưới cùng
                     Button(
                         onClick = {
@@ -675,7 +706,7 @@ fun BookingScreen(
                     ) {
                         // Định dạng giá tiền với 2 chữ số thập phân và đảm bảo hiển thị đầy đủ
                         val formattedPrice = String.format("%.2f", trip!!.price * guestCount)
-                        
+
                         Text(
                             text = "Buy Ticket - $$formattedPrice",
                             fontSize = 16.sp, // Giảm font size một chút
@@ -700,11 +731,11 @@ fun DatePicker(
     onDateSelected: (Long?) -> Unit
 ) {
     val selectedDate = state.selectedDateMillis
-    
+
     LaunchedEffect(selectedDate) {
         onDateSelected(selectedDate)
     }
-    
+
     androidx.compose.material3.DatePicker(
         state = state,
         title = title,
@@ -712,19 +743,6 @@ fun DatePicker(
         showModeToggle = showModeToggle
     )
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

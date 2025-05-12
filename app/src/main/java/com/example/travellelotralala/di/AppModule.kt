@@ -3,6 +3,7 @@ package com.example.travellelotralala.di
 import com.example.travellelotralala.repository.AuthRepository
 import com.example.travellelotralala.repository.BookingRepository
 import com.example.travellelotralala.repository.FirebaseAuthRepository
+import com.example.travellelotralala.repository.HotelRepository
 import com.example.travellelotralala.repository.SavedTripsRepository
 import com.example.travellelotralala.repository.TripRepository
 import com.google.firebase.auth.FirebaseAuth
@@ -50,7 +51,16 @@ object AppModule {
     ): BookingRepository {
         return BookingRepository(firestore, auth)
     }
+    
+    @Provides
+    @Singleton
+    fun provideHotelRepository(
+        firestore: FirebaseFirestore
+    ): HotelRepository {
+        return HotelRepository(firestore)
+    }
 }
+
 
 
 
