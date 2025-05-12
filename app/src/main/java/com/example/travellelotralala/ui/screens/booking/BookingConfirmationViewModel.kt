@@ -30,6 +30,11 @@ class BookingConfirmationViewModel @Inject constructor(
     val tripLocation: StateFlow<String?> = _tripLocation
     
     fun loadBookingDetails(bookingId: String) {
+        // Thêm kiểm tra để tránh gọi lại nếu đã có dữ liệu
+        if (_bookingDetails.value != null && _bookingDetails.value?.id == bookingId) {
+            return
+        }
+        
         viewModelScope.launch {
             _isLoading.value = true
             _error.value = null

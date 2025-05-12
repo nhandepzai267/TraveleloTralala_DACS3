@@ -20,6 +20,9 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Hotel
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Numbers
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -39,19 +42,153 @@ import coil.request.ImageRequest
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.*
+import androidx.navigation.NavController
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BookingScreen(
     tripId: String,
+    hotelId: String = "",
+    hotelName: String = "",
+    roomTypeId: String = "",
+    roomTypeName: String = "",
+    roomNumber: String = "",
     onBackClick: () -> Unit,
-    onBookingComplete: (String) -> Unit, // Thay đổi thành (String) -> Unit
-    onViewHotels: (String) -> Unit, // Thêm callback mới
+    onBookingComplete: (String) -> Unit,
+    onViewHotels: (String) -> Unit,
     viewModel: BookingViewModel = hiltViewModel()
 ) {
+    // Nếu có thông tin phòng, cập nhật ViewModel
+    LaunchedEffect(hotelId, hotelName, roomTypeId, roomTypeName, roomNumber) {
+        if (hotelId.isNotEmpty() && hotelName.isNotEmpty() && roomTypeId.isNotEmpty() && roomTypeName.isNotEmpty() && roomNumber.isNotEmpty()) {
+            Log.d("BookingScreen", "Setting hotel info from route params: hotelId=$hotelId, hotelName=$hotelName, roomTypeId=$roomTypeId, roomTypeName=$roomTypeName, roomNumber=$roomNumber")
+            viewModel.setHotelInfo(hotelId, hotelName, roomTypeId, roomTypeName, roomNumber)
+        }
+    }
+    
     val trip by viewModel.trip.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
+    val hotelBooked by viewModel.hotelBooked.collectAsState()
+    val hotelName by viewModel.hotelName.collectAsState()
+    val roomTypeName by viewModel.roomTypeName.collectAsState()
+    val roomNumber by viewModel.roomNumber.collectAsState()
+
+    // Hiển thị thông tin khách sạn đã chọn trong UI
+    if (hotelBooked) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = Color(0xFF2A2A2A)
+            ),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Hotel,
+                        contentDescription = "Hotel",
+                        tint = Color(0xFFFFAA33),
+                        modifier = Modifier.size(24.dp)
+                    )
+                    
+                    Spacer(modifier = Modifier.width(8.dp))
+                    
+                    Text(
+                        text = "Selected Accommodation",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                }
+                
+                Divider(
+                    color = Color.DarkGray,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+                
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(vertical = 4.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.LocationOn,
+                        contentDescription = "Hotel",
+                        tint = Color(0xFFFFAA33),
+                        modifier = Modifier.size(16.dp)
+                    )
+                    
+                    Spacer(modifier = Modifier.width(8.dp))
+                    
+                    Text(
+                        text = "Hotel: ${hotelName ?: "Unknown"}",
+                        fontSize = 16.sp,
+                        color = Color.White
+                    )
+                }
+                
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(vertical = 4.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Category,
+                        contentDescription = "Room Type",
+                        tint = Color(0xFFFFAA33),
+                        modifier = Modifier.size(16.dp)
+                    )
+                    
+                    Spacer(modifier = Modifier.width(8.dp))
+                    
+                    Text(
+                        text = "Room Type: ${roomTypeName ?: "Unknown"}",
+                        fontSize = 16.sp,
+                        color = Color.White
+                    )
+                }
+                
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(vertical = 4.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Numbers,
+                        contentDescription = "Room Number",
+                        tint = Color(0xFFFFAA33),
+                        modifier = Modifier.size(16.dp)
+                    )
+                    
+                    Spacer(modifier = Modifier.width(8.dp))
+                    
+                    Text(
+                        text = "Room Number: ${roomNumber ?: "Unknown"}",
+                        fontSize = 16.sp,
+                        color = Color.White
+                    )
+                }
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Text(
+                    text = "Your room is reserved and will be included in this booking",
+                    fontSize = 14.sp,
+                    color = Color.Gray,
+                    modifier = Modifier.padding(start = 24.dp)
+                )
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(16.dp))
+    }
 
     var selectedDate by remember { mutableStateOf<LocalDate?>(null) }
     var guestCount by remember { mutableStateOf(1) }
@@ -158,8 +295,6 @@ fun BookingScreen(
                             .verticalScroll(rememberScrollState())
                             .padding(horizontal = 16.dp)
                     ) {
-                        // Nội dung không thay đổi
-                        // ...
                         // Trip Info Card
                         Row(
                             modifier = Modifier
@@ -189,7 +324,7 @@ fun BookingScreen(
                                     fontSize = 20.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = Color.White,
-                                    modifier = Modifier.padding(bottom = 4.dp) // Thêm padding cố định ở dưới tên
+                                    modifier = Modifier.padding(bottom = 4.dp)
                                 )
 
                                 Text(
@@ -199,7 +334,128 @@ fun BookingScreen(
                                 )
                             }
                         }
-
+                        
+                        // Thêm debug text để kiểm tra giá trị hotelBooked
+                        Text(
+                            text = "Hotel Booked: $hotelBooked",
+                            color = Color.Yellow,
+                            fontSize = 14.sp
+                        )
+                        
+                        // Hiển thị thông tin khách sạn đã chọn (nếu có)
+                        if (hotelBooked) {
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 8.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = Color(0xFF2A2A2A)
+                                ),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp)
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.padding(bottom = 8.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Hotel,
+                                            contentDescription = "Hotel",
+                                            tint = Color(0xFFFFAA33),
+                                            modifier = Modifier.size(24.dp)
+                                        )
+                                        
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        
+                                        Text(
+                                            text = "Selected Accommodation",
+                                            fontSize = 18.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color.White
+                                        )
+                                    }
+                                    
+                                    Divider(
+                                        color = Color.DarkGray,
+                                        modifier = Modifier.padding(vertical = 8.dp)
+                                    )
+                                    
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.padding(vertical = 4.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.LocationOn,
+                                            contentDescription = "Hotel",
+                                            tint = Color(0xFFFFAA33),
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                        
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        
+                                        Text(
+                                            text = "Hotel: ${hotelName ?: "Unknown"}",
+                                            fontSize = 16.sp,
+                                            color = Color.White
+                                        )
+                                    }
+                                    
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.padding(vertical = 4.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Category,
+                                            contentDescription = "Room Type",
+                                            tint = Color(0xFFFFAA33),
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                        
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        
+                                        Text(
+                                            text = "Room Type: ${roomTypeName ?: "Unknown"}",
+                                            fontSize = 16.sp,
+                                            color = Color.White
+                                        )
+                                    }
+                                    
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.padding(vertical = 4.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Numbers,
+                                            contentDescription = "Room Number",
+                                            tint = Color(0xFFFFAA33),
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                        
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        
+                                        Text(
+                                            text = "Room Number: ${roomNumber ?: "Unknown"}",
+                                            fontSize = 16.sp,
+                                            color = Color.White
+                                        )
+                                    }
+                                    
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    
+                                    Text(
+                                        text = "Your room is reserved and will be included in this booking",
+                                        fontSize = 14.sp,
+                                        color = Color.Gray,
+                                        modifier = Modifier.padding(start = 24.dp)
+                                    )
+                                }
+                            }
+                        }
+                        
                         // Non-refundable Notice
                         Card(
                             modifier = Modifier

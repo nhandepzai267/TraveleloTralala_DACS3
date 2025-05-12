@@ -1,5 +1,6 @@
 package com.example.travellelotralala.navigation
 
+import android.net.Uri
 import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -9,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -59,6 +61,13 @@ sealed class Screen(val route: String) {
     object Booking : Screen("booking/{tripId}") {
         fun createRoute(tripId: String) = "booking/$tripId"
     }
+    object BookingWithRoom : Screen("booking_with_room/{tripId}/{hotelId}/{hotelName}/{roomTypeId}/{roomTypeName}/{roomNumber}") {
+        fun createRoute(tripId: String, hotelId: String, hotelName: String, roomTypeId: String, roomTypeName: String, roomNumber: String): String {
+            val encodedHotelName = Uri.encode(hotelName)
+            val encodedRoomTypeName = Uri.encode(roomTypeName)
+            return "booking_with_room/$tripId/$hotelId/$encodedHotelName/$roomTypeId/$encodedRoomTypeName/$roomNumber"
+        }
+    }
     object BookingConfirmation : Screen("booking_confirmation/{bookingId}") {
         fun createRoute(bookingId: String) = "booking_confirmation/$bookingId"
     }
@@ -69,7 +78,7 @@ sealed class Screen(val route: String) {
         fun createRoute(notificationId: String) = "notification_detail/$notificationId"
     }
     object Hotels : Screen("hotels/{location}") {
-        fun createRoute(location: String) = "hotels/$location"
+        fun createRoute(location: String) = "hotels/${Uri.encode(location)}"
     }
     object HotelDetail : Screen("hotel_detail/{hotelId}") {
         fun createRoute(hotelId: String) = "hotel_detail/$hotelId"
@@ -81,11 +90,19 @@ sealed class Screen(val route: String) {
     }
 }
 
+// Lưu trữ tripId hiện tại
+class NavigationState {
+    var currentTripId: String = ""
+}
+
 @Composable
 fun NavGraph(
     navController: NavHostController = rememberNavController(),
     modifier: Modifier = Modifier
 ) {
+    // Tạo và nhớ NavigationState để lưu trữ tripId hiện tại
+    val navigationState = remember { NavigationState() }
+    
     NavHost(
         navController = navController,
         startDestination = Screen.Welcome.route,
@@ -142,6 +159,8 @@ fun NavGraph(
         composable(Screen.Home.route) {
             HomeScreen(
                 onDestinationClick = { tripId ->
+                    // Lưu tripId hiện tại khi người dùng chọn một trip
+                    navigationState.currentTripId = tripId
                     navController.navigate(Screen.TripDetail.createRoute(tripId))
                 },
                 onNavigateToTab = { tab ->
@@ -159,6 +178,8 @@ fun NavGraph(
                     navigateToTab(navController, tab, Screen.Saved.route)
                 },
                 onTripClick = { tripId ->
+                    // Lưu tripId hiện tại khi người dùng chọn một trip
+                    navigationState.currentTripId = tripId
                     navController.navigate(Screen.TripDetail.createRoute(tripId))
                 }
             )
@@ -222,6 +243,10 @@ fun NavGraph(
         ) { backStackEntry ->
             val tripId = backStackEntry.arguments?.getString("tripId") ?: ""
             Log.d("NavGraph", "TripDetail screen with ID: $tripId")
+            
+            // Lưu tripId hiện tại
+            navigationState.currentTripId = tripId
+            
             TripDetailScreen(
                 tripId = tripId,
                 onBackClick = { navController.popBackStack() },
@@ -233,19 +258,27 @@ fun NavGraph(
                 }
             )
         }
+        
         composable(Screen.AllTrips.route) {
             AllTripsScreen(
                 onBackClick = { navController.popBackStack() },
                 onTripClick = { tripId ->
+                    // Lưu tripId hiện tại
+                    navigationState.currentTripId = tripId
                     navController.navigate(Screen.TripDetail.createRoute(tripId))
                 }
             )
         }
+        
         composable(
             route = Screen.Booking.route,
             arguments = listOf(navArgument("tripId") { type = NavType.StringType })
         ) { backStackEntry ->
             val tripId = backStackEntry.arguments?.getString("tripId") ?: ""
+            
+            // Lưu tripId hiện tại
+            navigationState.currentTripId = tripId
+            
             BookingScreen(
                 tripId = tripId,
                 onBackClick = { navController.popBackStack() },
@@ -259,6 +292,54 @@ fun NavGraph(
                 }
             )
         }
+        
+        // Màn hình Booking với thông tin phòng
+        composable(
+            route = Screen.BookingWithRoom.route,
+            arguments = listOf(
+                navArgument("tripId") { type = NavType.StringType },
+                navArgument("hotelId") { type = NavType.StringType },
+                navArgument("hotelName") { 
+                    type = NavType.StringType
+                    nullable = false
+                },
+                navArgument("roomTypeId") { type = NavType.StringType },
+                navArgument("roomTypeName") { 
+                    type = NavType.StringType
+                    nullable = false
+                },
+                navArgument("roomNumber") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val tripId = backStackEntry.arguments?.getString("tripId") ?: ""
+            val hotelId = backStackEntry.arguments?.getString("hotelId") ?: ""
+            val hotelName = Uri.decode(backStackEntry.arguments?.getString("hotelName") ?: "")
+            val roomTypeId = backStackEntry.arguments?.getString("roomTypeId") ?: ""
+            val roomTypeName = Uri.decode(backStackEntry.arguments?.getString("roomTypeName") ?: "")
+            val roomNumber = backStackEntry.arguments?.getString("roomNumber") ?: ""
+            
+            // Lưu tripId hiện tại
+            navigationState.currentTripId = tripId
+            
+            BookingScreen(
+                tripId = tripId,
+                hotelId = hotelId,
+                hotelName = hotelName,
+                roomTypeId = roomTypeId,
+                roomTypeName = roomTypeName,
+                roomNumber = roomNumber,
+                onBackClick = { navController.popBackStack() },
+                onBookingComplete = { bookingId ->
+                    navController.navigate(Screen.BookingConfirmation.createRoute(bookingId)) {
+                        popUpTo(Screen.Home.route)
+                    }
+                },
+                onViewHotels = { location ->
+                    navController.navigate(Screen.Hotels.createRoute(location))
+                }
+            )
+        }
+        
         composable(
             route = Screen.BookingConfirmation.route,
             arguments = listOf(
@@ -275,7 +356,6 @@ fun NavGraph(
             val bookingDetails by viewModel.bookingDetails.collectAsState()
             val isLoading by viewModel.isLoading.collectAsState()
             val error by viewModel.error.collectAsState()
-            val tripLocation by viewModel.tripLocation.collectAsState()
             
             if (isLoading) {
                 Box(
@@ -296,17 +376,8 @@ fun NavGraph(
                     )
                 }
             } else if (bookingDetails != null) {
-                val booking = bookingDetails!!
                 BookingConfirmationScreen(
-                    bookingId = booking.id,
-                    tripName = booking.tripName,
-                    tripImageUrl = booking.tripImageUrl,
-                    location = tripLocation ?: "",
-                    travelDate = booking.travelDate,
-                    numberOfTravelers = booking.numberOfTravelers,
-                    totalPrice = booking.totalPrice,
-                    contactName = booking.contactInfo["name"] ?: "",
-                    contactEmail = booking.contactInfo["email"] ?: "",
+                    bookingId = bookingId,
                     onDoneClick = {
                         navController.navigate(Screen.Bookings.route) {
                             popUpTo(Screen.BookingConfirmation.route) { inclusive = true }
@@ -315,6 +386,7 @@ fun NavGraph(
                 )
             }
         }
+        
         composable(
             route = Screen.BookingDetail.route,
             arguments = listOf(
@@ -327,6 +399,7 @@ fun NavGraph(
                 onBackClick = { navController.popBackStack() }
             )
         }
+        
         composable(
             route = Screen.NotificationDetail.route,
             arguments = listOf(
@@ -344,13 +417,14 @@ fun NavGraph(
                 }
             )
         }
+        
         composable(
             route = Screen.Hotels.route,
             arguments = listOf(
                 navArgument("location") { type = NavType.StringType }
             )
         ) { backStackEntry ->
-            val location = backStackEntry.arguments?.getString("location") ?: ""
+            val location = Uri.decode(backStackEntry.arguments?.getString("location") ?: "")
             HotelsScreen(
                 location = location,
                 onBackClick = { navController.popBackStack() },
@@ -359,6 +433,7 @@ fun NavGraph(
                 }
             )
         }
+        
         composable(
             route = Screen.HotelDetail.route,
             arguments = listOf(
@@ -374,6 +449,7 @@ fun NavGraph(
                 }
             )
         }
+        
         composable(
             route = Screen.RoomDetail.route,
             arguments = listOf(
@@ -387,9 +463,31 @@ fun NavGraph(
                 hotelId = hotelId,
                 roomTypeId = roomTypeId,
                 onBackClick = { navController.popBackStack() },
-                onBookRoom = { hotelId, roomTypeId, roomNumber ->
-                    // Có thể thêm điều hướng đến màn hình xác nhận đặt phòng sau này
-                    // navController.navigate(Screen.BookingConfirmation.createRoute(hotelId, roomTypeId, roomNumber))
+                onBookRoom = { hotelId, roomTypeId, roomNumber, hotelName, roomTypeName ->
+                    // Sử dụng tripId đã lưu trữ
+                    val tripId = navigationState.currentTripId
+                    
+                    if (tripId.isNotEmpty()) {
+                        // Điều hướng đến màn hình Booking với thông tin phòng
+                        navController.navigate(
+                            Screen.BookingWithRoom.createRoute(
+                                tripId,
+                                hotelId,
+                                hotelName,
+                                roomTypeId,
+                                roomTypeName,
+                                roomNumber
+                            )
+                        ) {
+                            // Xóa tất cả các màn hình khỏi back stack cho đến màn hình Home
+                            popUpTo(Screen.Home.route) {
+                                inclusive = false
+                            }
+                        }
+                    } else {
+                        // Nếu không có tripId, quay lại màn hình trước đó
+                        navController.popBackStack()
+                    }
                 }
             )
         }
@@ -415,17 +513,5 @@ private fun navigateToTab(navController: NavHostController, tab: TabItem, curren
         }
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
 
 

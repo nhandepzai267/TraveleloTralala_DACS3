@@ -144,6 +144,39 @@ class HotelRepository @Inject constructor(
     // Lấy danh sách phòng trống của một loại phòng
     suspend fun getAvailableRooms(hotelId: String, roomTypeId: String): Result<List<String>> {
         return try {
+            Log.d("HotelRepository", "Fetching available rooms for hotel: $hotelId, roomType: $roomTypeId")
+            
+            // Thử tìm document với ID chính xác
+            val hotelDoc = hotelsCollection.document(hotelId).get().await()
+            
+            if (!hotelDoc.exists()) {
+                Log.d("HotelRepository", "Hotel document not found with ID: $hotelId, trying alternative formats")
+                
+                // Thử truy vấn để tìm document với hotelId field
+                val query = hotelsCollection.whereEqualTo("hotelId", hotelId).get().await()
+                if (!query.documents.isEmpty()) {
+                    val actualHotelId = query.documents[0].id
+                    Log.d("HotelRepository", "Found hotel with actual document ID: $actualHotelId")
+                    
+                    val snapshot = hotelsCollection.document(actualHotelId)
+                        .collection("roomTypes").document(roomTypeId)
+                        .collection("rooms")
+                        .whereEqualTo("status", "available")
+                        .get()
+                        .await()
+                    
+                    val rooms = snapshot.documents.mapNotNull { doc ->
+                        doc.getString("roomNumber")
+                    }
+                    
+                    Log.d("HotelRepository", "Found ${rooms.size} available rooms")
+                    return Result.success(rooms)
+                }
+                
+                return Result.failure(Exception("Hotel not found"))
+            }
+            
+            // Nếu tìm thấy document với ID chính xác
             val snapshot = hotelsCollection.document(hotelId)
                 .collection("roomTypes").document(roomTypeId)
                 .collection("rooms")
@@ -155,8 +188,10 @@ class HotelRepository @Inject constructor(
                 doc.getString("roomNumber")
             }
             
+            Log.d("HotelRepository", "Found ${rooms.size} available rooms with direct ID")
             Result.success(rooms)
         } catch (e: Exception) {
+            Log.e("HotelRepository", "Error getting available rooms: ${e.message}")
             Result.failure(e)
         }
     }
@@ -164,6 +199,87 @@ class HotelRepository @Inject constructor(
     // Cập nhật trạng thái phòng thành đã đặt
     suspend fun bookRoom(hotelId: String, roomTypeId: String, roomNumber: String): Result<Unit> {
         return try {
+            Log.d("HotelRepository", "Attempting to book room: hotelId=$hotelId, roomTypeId=$roomTypeId, roomNumber=$roomNumber")
+            
+            // Thử tìm document với ID chính xác
+            val hotelDoc = hotelsCollection.document(hotelId).get().await()
+            
+            if (!hotelDoc.exists()) {
+                Log.d("HotelRepository", "Hotel document not found with ID: $hotelId, trying alternative formats")
+                
+                // Thử truy vấn để tìm document với hotelId field
+                val query = hotelsCollection.whereEqualTo("hotelId", hotelId).get().await()
+                if (!query.documents.isEmpty()) {
+                    val actualHotelId = query.documents[0].id
+                    Log.d("HotelRepository", "Found hotel with actual document ID: $actualHotelId")
+                    
+                    // Tìm phòng với ID thực tế
+                    val roomsSnapshot = hotelsCollection.document(actualHotelId)
+                        .collection("roomTypes").document(roomTypeId)
+                        .collection("rooms")
+                        .whereEqualTo("roomNumber", roomNumber)
+                        .get()
+                        .await()
+                    
+                    if (roomsSnapshot.documents.isEmpty()) {
+                        // Nếu không tìm thấy phòng, tạo một phòng mới với trạng thái booked
+                        Log.d("HotelRepository", "Room not found, creating a new room with booked status")
+                        val roomData = mapOf(
+                            "roomNumber" to roomNumber,
+                            "status" to "booked",
+                            "bookedAt" to com.google.firebase.Timestamp.now() // Thêm timestamp để biết khi nào phòng được đặt
+                        )
+                        
+                        hotelsCollection.document(actualHotelId)
+                            .collection("roomTypes").document(roomTypeId)
+                            .collection("rooms").document()
+                            .set(roomData)
+                            .await()
+                        
+                        Log.d("HotelRepository", "Successfully created and booked new room")
+                        return Result.success(Unit)
+                    }
+                    
+                    val roomDocId = roomsSnapshot.documents[0].id
+                    
+                    // Cập nhật trạng thái phòng
+                    hotelsCollection.document(actualHotelId)
+                        .collection("roomTypes").document(roomTypeId)
+                        .collection("rooms").document(roomDocId)
+                        .update(
+                            mapOf(
+                                "status" to "booked",
+                                "bookedAt" to com.google.firebase.Timestamp.now()
+                            )
+                        )
+                        .await()
+                    
+                    Log.d("HotelRepository", "Successfully updated room status to booked")
+                    return Result.success(Unit)
+                }
+                
+                // Nếu không tìm thấy khách sạn, tạo một document mới cho khách sạn và phòng
+                Log.d("HotelRepository", "Hotel not found, creating new hotel document")
+                
+                // Tạo phòng với trạng thái booked
+                val roomData = mapOf(
+                    "roomNumber" to roomNumber,
+                    "status" to "booked",
+                    "bookedAt" to com.google.firebase.Timestamp.now()
+                )
+                
+                // Tạo document mới cho khách sạn nếu không tồn tại
+                hotelsCollection.document(hotelId)
+                    .collection("roomTypes").document(roomTypeId)
+                    .collection("rooms").document()
+                    .set(roomData)
+                    .await()
+                
+                Log.d("HotelRepository", "Created new hotel document and booked room")
+                return Result.success(Unit)
+            }
+            
+            // Nếu tìm thấy document với ID chính xác
             val roomsSnapshot = hotelsCollection.document(hotelId)
                 .collection("roomTypes").document(roomTypeId)
                 .collection("rooms")
@@ -172,7 +288,22 @@ class HotelRepository @Inject constructor(
                 .await()
             
             if (roomsSnapshot.documents.isEmpty()) {
-                return Result.failure(Exception("Room not found"))
+                // Nếu không tìm thấy phòng, tạo một phòng mới với trạng thái booked
+                Log.d("HotelRepository", "Room not found, creating a new room with booked status")
+                val roomData = mapOf(
+                    "roomNumber" to roomNumber,
+                    "status" to "booked",
+                    "bookedAt" to com.google.firebase.Timestamp.now()
+                )
+                
+                hotelsCollection.document(hotelId)
+                    .collection("roomTypes").document(roomTypeId)
+                    .collection("rooms").document()
+                    .set(roomData)
+                    .await()
+                
+                Log.d("HotelRepository", "Successfully created and booked new room")
+                return Result.success(Unit)
             }
             
             val roomDocId = roomsSnapshot.documents[0].id
@@ -181,11 +312,19 @@ class HotelRepository @Inject constructor(
             hotelsCollection.document(hotelId)
                 .collection("roomTypes").document(roomTypeId)
                 .collection("rooms").document(roomDocId)
-                .update("status", "booked")
+                .update(
+                    mapOf(
+                        "status" to "booked",
+                        "bookedAt" to com.google.firebase.Timestamp.now()
+                    )
+                )
                 .await()
             
+            Log.d("HotelRepository", "Successfully updated room status to booked")
             Result.success(Unit)
         } catch (e: Exception) {
+            Log.e("HotelRepository", "Error booking room: ${e.message}", e)
+            // Trả về failure để ViewModel biết có lỗi xảy ra
             Result.failure(e)
         }
     }
@@ -239,11 +378,6 @@ class HotelRepository @Inject constructor(
         }
     }
 }
-
-
-
-
-
 
 
 

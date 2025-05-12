@@ -28,12 +28,22 @@ class RoomDetailViewModel @Inject constructor(
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error
     
+    // Thêm hotelName để hiển thị tên khách sạn
+    private val _hotelName = MutableStateFlow<String?>(null)
+    val hotelName: StateFlow<String?> = _hotelName
+    
     fun loadRoomDetails(hotelId: String, roomTypeId: String) {
         viewModelScope.launch {
             _isLoading.value = true
             _error.value = null
             
             try {
+                // Lấy thông tin khách sạn
+                hotelRepository.getHotelById(hotelId).onSuccess { hotelData ->
+                    // Truy cập thuộc tính name từ Map
+                    _hotelName.value = hotelData["name"] as? String
+                }
+                
                 Log.d("RoomDetailViewModel", "Loading room details for hotel: $hotelId, roomType: $roomTypeId")
                 
                 // Lấy thông tin loại phòng từ repository
@@ -58,23 +68,24 @@ class RoomDetailViewModel @Inject constructor(
                         val availableRoomsResult = hotelRepository.getAvailableRooms(hotelId, roomTypeId)
                         
                         availableRoomsResult.onSuccess { rooms ->
-                            _availableRooms.value = rooms
-                            Log.d("RoomDetailViewModel", "Available rooms: ${rooms.size}")
-                            
-                            // Nếu không có phòng trống, tạo dữ liệu mẫu
                             if (rooms.isEmpty()) {
-                                _availableRooms.value = getSampleRooms()
-                                Log.d("RoomDetailViewModel", "Using sample rooms")
+                                // Nếu không có phòng trống thực tế, tạo dữ liệu mẫu
+                                _availableRooms.value = getSampleRooms(roomTypeId)
+                                Log.d("RoomDetailViewModel", "No rooms found, using sample rooms")
+                            } else {
+                                _availableRooms.value = rooms
+                                Log.d("RoomDetailViewModel", "Available rooms: ${rooms.size}")
                             }
                         }.onFailure { exception ->
                             Log.e("RoomDetailViewModel", "Error loading available rooms: ${exception.message}")
-                            _availableRooms.value = getSampleRooms()
+                            _availableRooms.value = getSampleRooms(roomTypeId)
+                            Log.d("RoomDetailViewModel", "Using sample rooms due to error")
                         }
                     } else {
                         // Nếu không tìm thấy loại phòng, sử dụng dữ liệu mẫu
                         Log.d("RoomDetailViewModel", "Room type not found, using sample data")
                         _roomType.value = getSampleRoomType(roomTypeId)
-                        _availableRooms.value = getSampleRooms()
+                        _availableRooms.value = getSampleRooms(roomTypeId)
                     }
                 }.onFailure { exception ->
                     Log.e("RoomDetailViewModel", "Error loading room types: ${exception.message}")
@@ -82,7 +93,7 @@ class RoomDetailViewModel @Inject constructor(
                     
                     // Sử dụng dữ liệu mẫu nếu có lỗi
                     _roomType.value = getSampleRoomType(roomTypeId)
-                    _availableRooms.value = getSampleRooms()
+                    _availableRooms.value = getSampleRooms(roomTypeId)
                 }
                 
             } catch (e: Exception) {
@@ -127,7 +138,19 @@ class RoomDetailViewModel @Inject constructor(
         }
     }
     
-    private fun getSampleRooms(): List<String> {
-        return listOf("101", "102", "103", "104", "105")
+    private fun getSampleRooms(roomTypeId: String): List<String> {
+        // Tạo số phòng dựa trên loại phòng
+        val prefix = when (roomTypeId) {
+            "standard" -> "1"
+            "delux" -> "2"
+            "business" -> "3"
+            else -> "4"
+        }
+        
+        // Tạo 5 phòng mẫu
+        return (1..5).map { "$prefix${it.toString().padStart(2, '0')}" }
     }
 }
+
+
+

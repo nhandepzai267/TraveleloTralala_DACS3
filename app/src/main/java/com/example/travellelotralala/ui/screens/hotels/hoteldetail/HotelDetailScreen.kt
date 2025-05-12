@@ -50,7 +50,11 @@ fun HotelDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Hotel Details") },
+                title = { 
+                    Text(
+                        text = "Hotel Details",
+                    ) 
+                },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(
@@ -61,10 +65,15 @@ fun HotelDetailScreen(
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color(0xFF1E1E1E),
-                    titleContentColor = Color.White
-                )
+                    titleContentColor = Color.White,
+                    navigationIconContentColor = Color.White
+                ),
+                // Thêm cài đặt để loại bỏ padding mặc định
+                windowInsets = WindowInsets(0, 0, 0, 0)
             )
-        }
+        },
+        // Loại bỏ padding mặc định của Scaffold
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { paddingValues ->
         Box(
             modifier = Modifier
@@ -218,3 +227,4 @@ fun HotelDetailScreen(
         }
     }
 }
+

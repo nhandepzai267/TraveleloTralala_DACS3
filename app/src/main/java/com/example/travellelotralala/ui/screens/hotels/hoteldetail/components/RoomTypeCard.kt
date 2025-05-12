@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.travellelotralala.model.RoomType
+import com.example.travellelotralala.ui.theme.PrimaryOrange
 
 @Composable
 fun RoomTypeCard(
@@ -88,20 +89,26 @@ fun RoomTypeCard(
                     text = "$${roomType.basePrice} / night",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF4FC3F7)
+                    color = Color(0xFFFFAA33)
                 )
                 
                 Button(
                     onClick = onBookClick,
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF4CAF50)
+                        containerColor = PrimaryOrange
                     )
                 ) {
-                    Text("Book Now")
+                    Text(
+                        text = "Book Now",
+                        color = Color.White,
+                        fontWeight = FontWeight.Medium
+                    )
                 }
             }
         }
     }
 }
+
+
 
 

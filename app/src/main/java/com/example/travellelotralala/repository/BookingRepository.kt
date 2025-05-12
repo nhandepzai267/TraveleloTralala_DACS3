@@ -10,6 +10,7 @@ import java.time.ZoneId
 import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
+import android.util.Log
 
 @Singleton
 class BookingRepository @Inject constructor(
@@ -135,8 +136,8 @@ class BookingRepository @Inject constructor(
         }
     }
 
-    // Thêm hàm mới để cập nhật thông tin khách sạn và phòng
-    suspend fun updateBookingWithHotelInfo(
+    // Thêm phương thức để cập nhật booking với thông tin khách sạn
+    suspend fun updateBookingWithHotel(
         bookingId: String,
         hotelId: String,
         hotelName: String,
@@ -145,6 +146,8 @@ class BookingRepository @Inject constructor(
         roomNumber: String
     ): Result<Unit> {
         return try {
+            Log.d("BookingRepository", "Updating booking $bookingId with hotel info: hotelId=$hotelId, hotelName=$hotelName")
+            
             val currentUser = auth.currentUser
                 ?: return Result.failure(Exception("User not authenticated"))
             
@@ -172,11 +175,15 @@ class BookingRepository @Inject constructor(
                 )
                 .await()
             
+            Log.d("BookingRepository", "Booking updated successfully with hotel info")
             Result.success(Unit)
         } catch (e: Exception) {
+            Log.e("BookingRepository", "Error updating booking with hotel info: ${e.message}")
             Result.failure(e)
         }
     }
 }
+
+
 
 
