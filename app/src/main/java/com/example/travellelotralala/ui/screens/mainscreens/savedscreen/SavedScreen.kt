@@ -162,7 +162,12 @@ fun SavedScreen(
         // Bottom Navigation
         TabSwitcher(
             currentTab = TabItem.SAVED,
-            onTabSelected = onNavigateToTab
+            onTabSelected = { selectedTab ->
+                // Chỉ điều hướng khi tab được chọn khác với tab hiện tại
+                if (selectedTab != TabItem.SAVED) {
+                    onNavigateToTab(selectedTab)
+                }
+            }
         )
     }
 }

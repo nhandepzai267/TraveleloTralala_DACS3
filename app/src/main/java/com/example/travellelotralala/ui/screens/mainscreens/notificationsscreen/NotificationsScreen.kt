@@ -59,7 +59,6 @@ fun NotificationsScreen(
             )
         }
         
-        Divider(color = Color(0xFF2A2A2A), thickness = 1.dp)
         
         // Content
         Box(
@@ -116,7 +115,12 @@ fun NotificationsScreen(
         // Bottom Navigation
         TabSwitcher(
             currentTab = TabItem.NOTIFICATIONS,
-            onTabSelected = onNavigateToTab
+            onTabSelected = { selectedTab ->
+                // Chỉ điều hướng khi tab được chọn khác với tab hiện tại
+                if (selectedTab != TabItem.NOTIFICATIONS) {
+                    onNavigateToTab(selectedTab)
+                }
+            }
         )
     }
 }
@@ -212,5 +216,6 @@ data class Notification(
     val notiType: String = "",
     val createdAt: Date? = null
 )
+
 
 

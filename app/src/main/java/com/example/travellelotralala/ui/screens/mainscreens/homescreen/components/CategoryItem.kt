@@ -29,22 +29,22 @@ fun CategoryItem(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .padding(4.dp)
-            .clickable(onClick = onClick)
+            .clickable(onClick = onClick) // Đảm bảo sự kiện click được xử lý
     ) {
-        // Icon circle - giảm kích thước
+        // Icon circle
         Box(
             modifier = Modifier
-                .size(50.dp) // Giảm từ 60dp xuống 50dp
+                .size(50.dp)
                 .clip(CircleShape)
                 .background(Color(0xFF2A2A2A))
-                .padding(12.dp), // Giảm padding
+                .padding(12.dp),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = category.icon,
                 contentDescription = category.name,
                 tint = Color(0xFFFFAA33),
-                modifier = Modifier.size(20.dp) // Giảm kích thước icon
+                modifier = Modifier.size(20.dp)
             )
         }
         
@@ -54,7 +54,8 @@ fun CategoryItem(
             color = Color.White,
             fontSize = 12.sp,
             textAlign = TextAlign.Center,
-            modifier = Modifier.padding(top = 4.dp) // Giảm padding
+            modifier = Modifier.padding(top = 4.dp)
         )
     }
 }
+

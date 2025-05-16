@@ -28,10 +28,11 @@ enum class TabItem(val icon: ImageVector, val contentDescription: String) {
 @Composable
 fun TabSwitcher(
     currentTab: TabItem,
-    onTabSelected: (TabItem) -> Unit
+    onTabSelected: (TabItem) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .background(Color(0xFF1E1E1E))
     ) {
@@ -46,7 +47,12 @@ fun TabSwitcher(
                 TabIcon(
                     tab = tab,
                     isSelected = tab == currentTab,
-                    onClick = { onTabSelected(tab) }
+                    onClick = { 
+                        // Chỉ gọi callback khi tab được chọn khác với tab hiện tại
+                        if (tab != currentTab) {
+                            onTabSelected(tab)
+                        }
+                    }
                 )
             }
         }
@@ -76,4 +82,6 @@ private fun TabIcon(
         )
     }
 }
+
+
 

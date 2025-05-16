@@ -44,6 +44,10 @@ class HomeViewModel @Inject constructor(
     private val _currentUser = MutableStateFlow<User?>(null)
     val currentUser: StateFlow<User?> = _currentUser
 
+    // Thêm StateFlow mới cho recommended trips
+    private val _recommendedTrips = MutableStateFlow<List<Trip>>(emptyList())
+    val recommendedTrips: StateFlow<List<Trip>> = _recommendedTrips
+
     init {
         loadTrips()
         loadCategories()
@@ -58,7 +62,20 @@ class HomeViewModel @Inject constructor(
             try {
                 val result = tripRepository.getAllTrips()
                 result.onSuccess { tripList ->
-                    _trips.value = tripList
+                    // Lưu trữ danh sách gốc
+                    val originalList = tripList
+                    
+                    // Sắp xếp danh sách theo rating từ cao đến thấp cho Popular Destinations
+                    // và giới hạn chỉ lấy 3 trip có rating cao nhất
+                    val sortedByRating = originalList.sortedByDescending { it.rating }.take(3)
+                    
+                    // Lưu danh sách đã sắp xếp và giới hạn
+                    _trips.value = sortedByRating
+                    
+                    // Tạo danh sách ngẫu nhiên cho Recommended For You
+                    // và giới hạn chỉ lấy 3 trip ngẫu nhiên
+                    val shuffledList = originalList.shuffled().take(3)
+                    _recommendedTrips.value = shuffledList
                 }.onFailure { exception ->
                     _error.value = exception.message
                 }
@@ -106,5 +123,7 @@ class HomeViewModel @Inject constructor(
         }
     }
 }
+
+
 
 

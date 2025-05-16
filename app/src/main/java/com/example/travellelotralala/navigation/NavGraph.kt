@@ -35,9 +35,11 @@ import com.example.travellelotralala.ui.screens.alltrips.AllTripsScreen
 import com.example.travellelotralala.ui.screens.booking.BookingScreen
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import com.example.travellelotralala.ui.screens.booking.BookingConfirmationScreen
 import com.example.travellelotralala.ui.screens.booking.BookingConfirmationViewModel
 import com.example.travellelotralala.ui.screens.bookingdetail.BookingDetailScreen
+import com.example.travellelotralala.ui.screens.categorytrips.CategoryTripsScreen
 import com.example.travellelotralala.ui.screens.hotels.HotelsScreen
 import com.example.travellelotralala.ui.screens.hotels.hoteldetail.HotelDetailScreen
 import com.example.travellelotralala.ui.screens.notificationdetail.NotificationDetailScreen
@@ -88,6 +90,9 @@ sealed class Screen(val route: String) {
         fun createRoute(hotelId: String, roomTypeId: String): String {
             return "room_detail/$hotelId/$roomTypeId"
         }
+    }
+    object CategoryTrips : Screen("category_trips/{categoryName}") {
+        fun createRoute(categoryName: String) = "category_trips/${Uri.encode(categoryName)}"
     }
 }
 
@@ -171,6 +176,9 @@ fun NavGraph(
                 },
                 onNavigateToProfile = {
                     navController.navigate(Screen.Profile.route)
+                },
+                onCategoryClick = { categoryName ->
+                    navController.navigate(Screen.CategoryTrips.createRoute(categoryName))
                 }
             )
         }
@@ -189,31 +197,8 @@ fun NavGraph(
         
         composable(Screen.Bookings.route) {
             BookedTripsScreen(
-                onNavigateToTab = { tabItem ->
-                    when (tabItem) {
-                        TabItem.HOME -> navController.navigate(Screen.Home.route) {
-                            popUpTo(Screen.Home.route) {
-                                saveState = true
-                            }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                        TabItem.SAVED -> navController.navigate(Screen.Saved.route) {
-                            popUpTo(Screen.Saved.route) {
-                                saveState = true
-                            }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                        TabItem.BOOKINGS -> { /* Already on Bookings screen */ }
-                        TabItem.NOTIFICATIONS -> navController.navigate(Screen.Notifications.route) {
-                            popUpTo(Screen.Notifications.route) {
-                                saveState = true
-                            }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    }
+                onNavigateToTab = { tab ->
+                    navigateToTab(navController, tab, Screen.Bookings.route)
                 },
                 onBookingClick = { bookingId ->
                     navController.navigate(Screen.BookingDetail.createRoute(bookingId))
@@ -489,6 +474,22 @@ fun NavGraph(
                 }
             )
         }
+        composable(
+            route = Screen.CategoryTrips.route,
+            arguments = listOf(
+                navArgument("categoryName") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val categoryName = Uri.decode(backStackEntry.arguments?.getString("categoryName") ?: "")
+            CategoryTripsScreen(
+                categoryName = categoryName,
+                onBackClick = { navController.popBackStack() },
+                onTripClick = { tripId ->
+                    navigationState.currentTripId = tripId
+                    navController.navigate(Screen.TripDetail.createRoute(tripId))
+                }
+            )
+        }
     }
 }
 
@@ -503,14 +504,20 @@ private fun navigateToTab(navController: NavHostController, tab: TabItem, curren
     
     if (targetRoute != currentRoute) {
         navController.navigate(targetRoute) {
-            popUpTo(targetRoute) {
+            // Xóa tất cả các màn hình trên back stack cho đến màn hình Home
+            popUpTo(navController.graph.findStartDestination().id) {
                 saveState = true
             }
+            // Tránh tạo nhiều instance của cùng một màn hình
             launchSingleTop = true
+            // Khôi phục trạng thái nếu có
             restoreState = true
         }
     }
 }
+
+
+
 
 
 
