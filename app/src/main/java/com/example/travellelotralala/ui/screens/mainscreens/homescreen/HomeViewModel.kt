@@ -17,6 +17,12 @@ import androidx.compose.material.icons.filled.Museum
 import androidx.compose.material.icons.filled.Park
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.LocalActivity
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ktx.toObject
+import kotlinx.coroutines.tasks.await
+import android.util.Log
+import com.example.travellelotralala.model.User
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
@@ -35,9 +41,13 @@ class HomeViewModel @Inject constructor(
     private val _categories = MutableStateFlow<List<TravelCategory>>(emptyList())
     val categories: StateFlow<List<TravelCategory>> = _categories
 
+    private val _currentUser = MutableStateFlow<User?>(null)
+    val currentUser: StateFlow<User?> = _currentUser
+
     init {
         loadTrips()
         loadCategories()
+        getCurrentUser()
     }
     
     private fun loadTrips() {
@@ -71,5 +81,30 @@ class HomeViewModel @Inject constructor(
         )
         _categories.value = categoryList
     }
+
+    private fun getCurrentUser() {
+        viewModelScope.launch {
+            try {
+                val auth = FirebaseAuth.getInstance()
+                val currentUserId = auth.currentUser?.uid
+                
+                if (currentUserId != null) {
+                    val userDoc = FirebaseFirestore.getInstance()
+                        .collection("users")
+                        .document(currentUserId)
+                        .get()
+                        .await()
+                    
+                    if (userDoc.exists()) {
+                        val user = userDoc.toObject(User::class.java)
+                        _currentUser.value = user
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("HomeViewModel", "Error getting current user: ${e.message}")
+            }
+        }
+    }
 }
+
 

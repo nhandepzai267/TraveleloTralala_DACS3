@@ -1,5 +1,6 @@
 package com.example.travellelotralala.ui.screens.mainscreens.homescreen
 
+import android.graphics.drawable.ColorDrawable
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -17,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.PlatformTextStyle
@@ -38,7 +40,8 @@ import com.example.travellelotralala.ui.screens.mainscreens.homescreen.component
 fun HomeScreen(
     onDestinationClick: (String) -> Unit = {},
     onNavigateToTab: (TabItem) -> Unit = {},
-    onSeeAllClick: () -> Unit = {}, // Thêm callback mới
+    onSeeAllClick: () -> Unit = {},
+    onNavigateToProfile: () -> Unit = {}, // Thêm callback mới
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     var searchQuery by remember { mutableStateOf("") }
@@ -52,6 +55,9 @@ fun HomeScreen(
             .fillMaxSize()
             .background(Color(0xFF1E1E1E))
     ) {
+        // Thêm padding phía trên để tránh thanh trạng thái
+        Spacer(modifier = Modifier.height(3.dp))
+        
         // Top Bar with Menu, Greeting and Profile
         Row(
             modifier = Modifier
@@ -67,20 +73,35 @@ fun HomeScreen(
                 tint = Color.White
             )
             
+            // Hiển thị tên người dùng từ Firestore
+            val currentUser by viewModel.currentUser.collectAsState()
             Text(
-                text = "Hello Aldito",
+                text = "Hello ${currentUser?.name ?: "Guest"}",
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Medium,
                 color = Color.White
             )
             
+            // Hiển thị avatar người dùng từ Firestore
             Box(
                 modifier = Modifier
                     .size(40.dp)
                     .clip(CircleShape)
                     .background(Color.LightGray)
-                    .clickable { }
-            )
+                    .clickable { onNavigateToProfile() } // Sử dụng callback mới
+            ) {
+                AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(currentUser?.avatarUrl)
+                        .crossfade(true)
+                        .placeholder(ColorDrawable(Color.LightGray.toArgb()))
+                        .error(ColorDrawable(Color.Gray.toArgb()))
+                        .build(),
+                    contentDescription = "User Avatar",
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+            }
         }
         
         // Search Bar - Sửa lại để text hiển thị đúng
@@ -166,7 +187,7 @@ fun HomeScreen(
             
             Text(
                 text = "See All",
-                fontSize = 10.sp,
+                fontSize = 16.sp,
                 fontWeight = FontWeight.Medium,
                 color = Color(0xFFFFAA33),
                 modifier = Modifier

@@ -336,11 +336,11 @@ fun BookingScreen(
                         }
                         
                         // Thêm debug text để kiểm tra giá trị hotelBooked
-                        Text(
-                            text = "Hotel Booked: $hotelBooked",
-                            color = Color.Yellow,
-                            fontSize = 14.sp
-                        )
+//                        Text(
+//                            text = "Hotel Booked: $hotelBooked",
+//                            color = Color.Yellow,
+//                            fontSize = 14.sp
+//                        )
                         
                         // Hiển thị thông tin khách sạn đã chọn (nếu có)
                         if (hotelBooked) {

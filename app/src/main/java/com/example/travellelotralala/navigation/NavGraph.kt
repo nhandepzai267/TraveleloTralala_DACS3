@@ -42,6 +42,7 @@ import com.example.travellelotralala.ui.screens.hotels.HotelsScreen
 import com.example.travellelotralala.ui.screens.hotels.hoteldetail.HotelDetailScreen
 import com.example.travellelotralala.ui.screens.notificationdetail.NotificationDetailScreen
 import com.example.travellelotralala.ui.screens.hotels.roomdetail.RoomDetailScreen
+import com.example.travellelotralala.ui.screens.profile.UserProfileScreen
 
 sealed class Screen(val route: String) {
     object Welcome : Screen("welcome")
@@ -159,7 +160,6 @@ fun NavGraph(
         composable(Screen.Home.route) {
             HomeScreen(
                 onDestinationClick = { tripId ->
-                    // Lưu tripId hiện tại khi người dùng chọn một trip
                     navigationState.currentTripId = tripId
                     navController.navigate(Screen.TripDetail.createRoute(tripId))
                 },
@@ -168,6 +168,9 @@ fun NavGraph(
                 },
                 onSeeAllClick = {
                     navController.navigate(Screen.AllTrips.route)
+                },
+                onNavigateToProfile = {
+                    navController.navigate(Screen.Profile.route)
                 }
             )
         }
@@ -178,7 +181,6 @@ fun NavGraph(
                     navigateToTab(navController, tab, Screen.Saved.route)
                 },
                 onTripClick = { tripId ->
-                    // Lưu tripId hiện tại khi người dùng chọn một trip
                     navigationState.currentTripId = tripId
                     navController.navigate(Screen.TripDetail.createRoute(tripId))
                 }
@@ -231,10 +233,14 @@ fun NavGraph(
         }
         
         composable(Screen.Profile.route) {
-            // Tạm thời hiển thị một màn hình đơn giản
-            Box(modifier = Modifier.fillMaxSize()) {
-                Text("Profile Screen", modifier = Modifier.align(Alignment.Center))
-            }
+            UserProfileScreen(
+                onBackClick = { navController.popBackStack() },
+                onLogout = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.Home.route) { inclusive = true }
+                    }
+                }
+            )
         }
         
         composable(
@@ -244,7 +250,6 @@ fun NavGraph(
             val tripId = backStackEntry.arguments?.getString("tripId") ?: ""
             Log.d("NavGraph", "TripDetail screen with ID: $tripId")
             
-            // Lưu tripId hiện tại
             navigationState.currentTripId = tripId
             
             TripDetailScreen(
@@ -263,7 +268,6 @@ fun NavGraph(
             AllTripsScreen(
                 onBackClick = { navController.popBackStack() },
                 onTripClick = { tripId ->
-                    // Lưu tripId hiện tại
                     navigationState.currentTripId = tripId
                     navController.navigate(Screen.TripDetail.createRoute(tripId))
                 }
@@ -276,7 +280,6 @@ fun NavGraph(
         ) { backStackEntry ->
             val tripId = backStackEntry.arguments?.getString("tripId") ?: ""
             
-            // Lưu tripId hiện tại
             navigationState.currentTripId = tripId
             
             BookingScreen(
@@ -318,7 +321,6 @@ fun NavGraph(
             val roomTypeName = Uri.decode(backStackEntry.arguments?.getString("roomTypeName") ?: "")
             val roomNumber = backStackEntry.arguments?.getString("roomNumber") ?: ""
             
-            // Lưu tripId hiện tại
             navigationState.currentTripId = tripId
             
             BookingScreen(
@@ -464,11 +466,9 @@ fun NavGraph(
                 roomTypeId = roomTypeId,
                 onBackClick = { navController.popBackStack() },
                 onBookRoom = { hotelId, roomTypeId, roomNumber, hotelName, roomTypeName ->
-                    // Sử dụng tripId đã lưu trữ
                     val tripId = navigationState.currentTripId
                     
                     if (tripId.isNotEmpty()) {
-                        // Điều hướng đến màn hình Booking với thông tin phòng
                         navController.navigate(
                             Screen.BookingWithRoom.createRoute(
                                 tripId,
@@ -479,13 +479,11 @@ fun NavGraph(
                                 roomNumber
                             )
                         ) {
-                            // Xóa tất cả các màn hình khỏi back stack cho đến màn hình Home
                             popUpTo(Screen.Home.route) {
                                 inclusive = false
                             }
                         }
                     } else {
-                        // Nếu không có tripId, quay lại màn hình trước đó
                         navController.popBackStack()
                     }
                 }
@@ -513,5 +511,7 @@ private fun navigateToTab(navController: NavHostController, tab: TabItem, curren
         }
     }
 }
+
+
 
 
